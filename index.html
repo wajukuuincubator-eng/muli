@@ -1,238 +1,356 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VibeWorld Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <style>
-        body { background-color: #0b141a; color: #e9edef; font-family: sans-serif; }
-        .wa-chat-bg { 
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
-            background-blend-mode: overlay; background-color: #0b141a;
-        }
-        input::placeholder { color: #8696a0; }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeWorld</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+<style>
+body{
+background:#0b141a;
+color:#e9edef;
+}
+
+.chat-bg{
+background-image:url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
+background-blend-mode:overlay;
+background-color:#0b141a;
+}
+
+.hide-scroll::-webkit-scrollbar{
+display:none;
+}
+</style>
 </head>
+
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <div id="login-screen" class="fixed inset-0 z-50 bg-[#111b21] flex items-center justify-center p-4">
-        <div class="bg-[#202c33] p-6 rounded-2xl w-full max-w-sm border border-gray-700 shadow-2xl text-center">
-            <h1 class="text-3xl font-bold mb-6 text-green-500">VibeWorld</h1>
-            <div class="space-y-4">
-                <div class="flex gap-2">
-                    <input id="my-country" type="text" placeholder="+254" class="w-20 bg-[#2a3942] p-3 rounded-lg outline-none border-none">
-                    <input id="my-local-num" type="tel" placeholder="Your Number" class="flex-1 p-3 bg-[#2a3942] rounded-lg outline-none border-none">
-                </div>
-                <input id="my-email" type="email" placeholder="Email for Login Alert" class="w-full p-3 bg-[#2a3942] rounded-lg outline-none border-none">
-                <button onclick="firstTimeLogin()" class="w-full bg-green-600 p-3 rounded-lg font-bold uppercase mt-4">Activate My Number</button>
-            </div>
-        </div>
-    </div>
+<!-- LOGIN -->
+<div id="login" class="fixed inset-0 bg-[#111b21] flex items-center justify-center p-4">
 
-    <div id="app-interface" class="hidden flex h-full w-full">
-        <aside id="sidebar" class="w-full md:w-1/3 bg-[#111b21] border-r border-gray-800 flex flex-col shrink-0">
-            <header class="p-4 bg-[#202c33] flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-xs font-bold">ME</div>
-                    <span id="my-info" class="text-xs font-bold text-green-500"></span>
-                </div>
-                <button onclick="logout()" class="text-[10px] text-gray-500 hover:text-red-400">LOGOUT</button>
-            </header>
-            
-            <div class="p-4 border-b border-gray-800">
-                <div class="flex gap-2">
-                    <input id="dest-num" type="tel" placeholder="Enter Receiver Number" class="flex-1 bg-[#2a3942] p-2 rounded-lg text-sm outline-none">
-                    <button onclick="startNewChat()" class="bg-green-600 px-4 py-2 rounded-lg text-xs font-bold">CHAT</button>
-                </div>
-            </div>
+<div class="bg-[#202c33] p-6 rounded-xl w-full max-w-sm">
 
-            <div id="contact-list" class="flex-1 overflow-y-auto hide-scroll">
-                </div>
-        </aside>
+<h1 class="text-3xl text-green-500 font-bold text-center mb-6">
+VibeWorld
+</h1>
 
-        <main id="chat-main" class="hidden md:flex flex-1 flex flex-col bg-[#0b141a]">
-            <header class="p-3 bg-[#202c33] flex justify-between items-center shadow-lg">
-                <div class="flex items-center gap-3">
-                    <button onclick="showSidebar()" class="md:hidden text-xl">←</button>
-                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-xs">👤</div>
-                    <div>
-                        <h2 id="header-name" class="font-bold text-sm">...</h2>
-                        <p id="target-status" class="text-[10px] text-gray-400 uppercase font-bold">Connecting...</p>
-                    </div>
-                </div>
-                <div class="flex gap-4 px-2">
-                    <button onclick="initCall()" class="text-xl text-gray-400">📞</button>
-                </div>
-            </header>
+<div class="space-y-4">
 
-            <div id="message-container" class="flex-1 wa-chat-bg overflow-y-auto p-4 flex flex-col gap-2"></div>
+<div class="flex gap-2">
+<input id="country" placeholder="+254"
+class="w-20 bg-[#2a3942] p-3 rounded outline-none">
 
-            <footer class="p-3 bg-[#202c33] flex items-center gap-2">
-                <input id="chat-input" type="text" placeholder="Type a message..." class="flex-1 bg-[#2a3942] p-3 rounded-xl outline-none text-sm">
-                <button onclick="sendVibe()" class="text-green-500 font-bold px-4">SEND</button>
-            </footer>
-        </main>
-    </div>
+<input id="number" placeholder="Your Number"
+class="flex-1 bg-[#2a3942] p-3 rounded outline-none">
+</div>
 
-    <div id="call-ui" class="fixed inset-0 bg-black hidden z-[100] flex flex-col items-center justify-center">
-        <video id="remote-stream" autoplay playsinline class="w-full h-full object-cover"></video>
-        <button onclick="location.reload()" class="absolute bottom-10 bg-red-600 p-6 rounded-full text-white font-bold">END CALL</button>
-    </div>
+<button onclick="login()"
+class="w-full bg-green-600 p-3 rounded font-bold">
+Activate
+</button>
 
-    <script>
-        let peer, conn, myFullNum, activeTarget;
-        // Phone Storage for Chats and Identity
-        let db = JSON.parse(localStorage.getItem('vibe_db') || '{"me":null, "chats":{}}');
+</div>
+</div>
+</div>
 
-        window.onload = () => {
-            if(db.me) {
-                document.getElementById('login-screen').style.display = 'none';
-                initPeer(db.me.num);
-            }
-        };
 
-        function firstTimeLogin() {
-            const country = document.getElementById('my-country').value.replace('+', '');
-            const local = document.getElementById('my-local-num').value;
-            const email = document.getElementById('my-email').value;
-            if(!local) return alert("Number is required");
-            
-            myFullNum = country + local;
-            db.me = { num: myFullNum, email: email };
-            saveDB();
-            initPeer(myFullNum);
-            document.getElementById('login-screen').style.display = 'none';
-        }
+<!-- APP -->
+<div id="app" class="hidden h-full flex">
 
-        function initPeer(id) {
-            peer = new Peer(id);
-            document.getElementById('app-interface').classList.remove('hidden');
-            document.getElementById('my-info').innerText = "+" + id;
-            renderContacts();
+<!-- SIDEBAR -->
+<div id="sidebar"
+class="w-full md:w-1/3 bg-[#111b21] border-r border-gray-800 flex flex-col">
 
-            peer.on('connection', c => {
-                conn = c;
-                setupConnection(c.peer);
-            });
+<header class="p-4 bg-[#202c33] flex justify-between">
 
-            peer.on('call', call => {
-                if(confirm("Incoming Vibe Call...")) {
-                    navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(s => {
-                        call.answer(s);
-                        document.getElementById('call-ui').classList.remove('hidden');
-                        call.on('stream', rs => document.getElementById('remote-stream').srcObject = rs);
-                    });
-                }
-            });
-        }
+<span id="myid" class="text-green-400 text-sm font-bold"></span>
 
-        function startNewChat() {
-            const target = document.getElementById('dest-num').value.replace('+', '');
-            if(!target) return;
-            if(!db.chats[target]) db.chats[target] = [];
-            saveDB();
-            openChat(target);
-        }
+<button onclick="logout()" class="text-red-400 text-xs">
+LOGOUT
+</button>
 
-        function openChat(id) {
-            activeTarget = id;
-            document.getElementById('sidebar').classList.add('hidden', 'md:block');
-            document.getElementById('chat-main').classList.remove('hidden');
-            document.getElementById('chat-main').classList.add('flex');
-            document.getElementById('header-name').innerText = "+" + id;
-            
-            // Load Old Chats from Storage
-            const container = document.getElementById('message-container');
-            container.innerHTML = '';
-            (db.chats[id] || []).forEach(m => displayMessageUI(m.text, m.sender));
+</header>
 
-            // Connect Peer
-            conn = peer.connect(id);
-            conn.on('open', () => {
-                document.getElementById('target-status').innerText = "ONLINE";
-                document.getElementById('target-status').className = "text-[10px] text-green-500 font-bold";
-                setupConnection(id);
-            });
-        }
+<div class="p-3 border-b border-gray-800 flex gap-2">
 
-        function setupConnection(id) {
-            conn.on('data', data => {
-                storeMsg(id, data, 'them');
-                if(activeTarget === id) displayMessageUI(data, 'them');
-                renderContacts();
-            });
-        }
+<input id="target"
+placeholder="Receiver number"
+class="flex-1 bg-[#2a3942] p-2 rounded text-sm outline-none">
 
-        function sendVibe() {
-            const val = document.getElementById('chat-input').value;
-            if(conn?.open && val) {
-                conn.send(val);
-                storeMsg(activeTarget, val, 'me');
-                displayMessageUI(val, 'me');
-                document.getElementById('chat-input').value = '';
-                renderContacts();
-            }
-        }
+<button onclick="startChat()"
+class="bg-green-600 px-4 rounded text-xs">
+CHAT
+</button>
 
-        function storeMsg(id, text, sender) {
-            if(!db.chats[id]) db.chats[id] = [];
-            db.chats[id].push({ text, sender, time: Date.now() });
-            saveDB();
-        }
+</div>
 
-        function displayMessageUI(text, sender) {
-            const box = document.getElementById('message-container');
-            const div = document.createElement('div');
-            div.className = `p-3 px-4 max-w-[85%] text-sm shadow-sm ${sender === 'me' ? 'bg-[#005c4b] self-end rounded-l-xl rounded-br-xl' : 'bg-[#202c33] self-start rounded-r-xl rounded-bl-xl'}`;
-            div.innerText = text;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-        }
+<div id="contacts"
+class="flex-1 overflow-y-auto hide-scroll"></div>
 
-        function renderContacts() {
-            const list = document.getElementById('contact-list');
-            list.innerHTML = '';
-            Object.keys(db.chats).reverse().forEach(id => {
-                const lastMsg = db.chats[id][db.chats[id].length - 1]?.text || "No messages yet";
-                const div = document.createElement('div');
-                div.className = "p-4 border-b border-gray-800 hover:bg-[#202c33] cursor-pointer flex gap-3 items-center";
-                div.onclick = () => openChat(id);
-                div.innerHTML = `
-                    <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">👤</div>
-                    <div class="flex-1 overflow-hidden">
-                        <p class="text-sm font-bold">+${id}</p>
-                        <p class="text-xs text-gray-500 truncate">${lastMsg}</p>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        }
+</div>
 
-        function showSidebar() {
-            document.getElementById('sidebar').classList.remove('hidden');
-            document.getElementById('chat-main').classList.add('hidden');
-        }
 
-        function saveDB() { localStorage.setItem('vibe_db', JSON.stringify(db)); }
+<!-- CHAT -->
+<div id="chat"
+class="hidden md:flex flex-1 flex-col">
 
-        function logout() {
-            if(confirm("Logout and clear all saved chats?")) {
-                localStorage.removeItem('vibe_db');
-                location.reload();
-            }
-        }
+<header class="p-3 bg-[#202c33] flex items-center gap-3">
 
-        function initCall() {
-            navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(s => {
-                const call = peer.call(activeTarget, s);
-                document.getElementById('call-ui').classList.remove('hidden');
-                call.on('stream', rs => document.getElementById('remote-stream').srcObject = rs);
-            });
-        }
-    </script>
+<button onclick="back()" class="md:hidden text-xl">←</button>
+
+<h2 id="chatname" class="font-bold text-sm"></h2>
+
+</header>
+
+
+<div id="messages"
+class="flex-1 overflow-y-auto chat-bg p-4 flex flex-col gap-2">
+</div>
+
+<footer class="p-3 bg-[#202c33] flex gap-2">
+
+<input id="msg"
+placeholder="Message"
+class="flex-1 bg-[#2a3942] p-3 rounded outline-none text-sm">
+
+<button onclick="send()" class="text-green-400 font-bold">
+SEND
+</button>
+
+</footer>
+
+</div>
+</div>
+
+
+
+<script>
+
+let peer
+let conn
+let myid
+let active
+
+let db = JSON.parse(localStorage.getItem("vibe_db") || '{"me":null,"chats":{}}')
+
+window.onload=()=>{
+
+if(db.me){
+
+document.getElementById("login").style.display="none"
+
+startPeer(db.me)
+
+}
+
+}
+
+function login(){
+
+let country=document.getElementById("country").value.replace("+","")
+let num=document.getElementById("number").value
+
+if(!num) return alert("Enter number")
+
+myid=country+num
+
+db.me=myid
+
+save()
+
+document.getElementById("login").style.display="none"
+
+startPeer(myid)
+
+}
+
+
+function startPeer(id){
+
+peer=new Peer(id)
+
+document.getElementById("app").classList.remove("hidden")
+
+document.getElementById("myid").innerText="+"+id
+
+renderContacts()
+
+peer.on("connection",c=>{
+
+conn=c
+
+setup(c.peer)
+
+})
+
+}
+
+
+function startChat(){
+
+let id=document.getElementById("target").value.replace("+","")
+
+if(!id) return
+
+if(!db.chats[id]) db.chats[id]=[]
+
+save()
+
+openChat(id)
+
+}
+
+
+function openChat(id){
+
+active=id
+
+document.getElementById("sidebar").classList.add("hidden")
+document.getElementById("chat").classList.remove("hidden")
+
+document.getElementById("chatname").innerText="+"+id
+
+let box=document.getElementById("messages")
+
+box.innerHTML=""
+
+;(db.chats[id]||[]).forEach(m=>{
+
+msgUI(m.text,m.sender)
+
+})
+
+conn=peer.connect(id)
+
+conn.on("open",()=>{
+
+setup(id)
+
+})
+
+}
+
+
+function setup(id){
+
+conn.on("data",data=>{
+
+store(id,data,"them")
+
+if(active===id) msgUI(data,"them")
+
+renderContacts()
+
+})
+
+}
+
+
+function send(){
+
+let val=document.getElementById("msg").value
+
+if(!val||!conn?.open) return
+
+conn.send(val)
+
+store(active,val,"me")
+
+msgUI(val,"me")
+
+document.getElementById("msg").value=""
+
+renderContacts()
+
+}
+
+
+function store(id,text,sender){
+
+if(!db.chats[id]) db.chats[id]=[]
+
+db.chats[id].push({text,sender,time:Date.now()})
+
+save()
+
+}
+
+
+function msgUI(text,sender){
+
+let div=document.createElement("div")
+
+div.className=
+sender==="me"
+?"bg-[#005c4b] self-end p-3 rounded-xl max-w-[80%]"
+:"bg-[#202c33] self-start p-3 rounded-xl max-w-[80%]"
+
+div.innerText=text
+
+let box=document.getElementById("messages")
+
+box.appendChild(div)
+
+box.scrollTop=box.scrollHeight
+
+}
+
+
+function renderContacts(){
+
+let list=document.getElementById("contacts")
+
+list.innerHTML=""
+
+Object.keys(db.chats).reverse().forEach(id=>{
+
+let last=db.chats[id].slice(-1)[0]?.text||""
+
+let div=document.createElement("div")
+
+div.className="p-4 border-b border-gray-800 cursor-pointer hover:bg-[#202c33]"
+
+div.innerHTML=`
+<p class="font-bold text-sm">+${id}</p>
+<p class="text-xs text-gray-400 truncate">${last}</p>
+`
+
+div.onclick=()=>openChat(id)
+
+list.appendChild(div)
+
+})
+
+}
+
+
+function back(){
+
+document.getElementById("chat").classList.add("hidden")
+document.getElementById("sidebar").classList.remove("hidden")
+
+}
+
+
+function save(){
+
+localStorage.setItem("vibe_db",JSON.stringify(db))
+
+}
+
+
+function logout(){
+
+localStorage.removeItem("vibe_db")
+
+location.reload()
+
+}
+
+</script>
+
 </body>
 </html>
