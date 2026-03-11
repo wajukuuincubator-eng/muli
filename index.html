@@ -3,225 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VibeChat Ultra</title>
+    <title>VibeWorld Secure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
-        .wa-dark { background-color: #111b21; }
-        .wa-sidebar { background-color: #111b21; border-right: 1px solid #2f3b44; }
-        .wa-chat-bg { background-color: #0b141a; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; }
-        .wa-message-me { background-color: #005c4b; border-radius: 8px 0px 8px 8px; }
-        .wa-message-them { background-color: #202c33; border-radius: 0px 8px 8px 8px; }
+        .wa-dark { background-color: #0b141a; }
+        .wa-sidebar { background-color: #111b21; border-right: 1px solid #222d34; }
+        .wa-message-me { background-color: #005c4b; color: #e9edef; border-radius: 10px 0 10px 10px; }
+        .wa-message-them { background-color: #202c33; color: #e9edef; border-radius: 0 10px 10px 10px; }
         .wa-header { background-color: #202c33; }
-        .wa-input-bar { background-color: #202c33; }
     </style>
 </head>
-<body class="h-screen flex bg-[#0b141a] text-[#e9edef] font-sans overflow-hidden">
+<body class="h-screen flex flex-col wa-dark text-[#e9edef] font-sans overflow-hidden">
 
-    <aside id="sidebar" class="w-full md:w-1/3 wa-sidebar flex flex-col z-20">
-        <header class="wa-header p-4 flex justify-between items-center">
-            <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center font-bold">V</div>
-            <div class="flex gap-6 text-gray-400">
-                <button onclick="addNewContact()" class="text-xl">➕</button>
-                <button class="text-xl">⋮</button>
-            </div>
-        </header>
-        
-        <div class="p-3">
-            <input type="text" placeholder="Search or start new chat" class="w-full bg-[#2a3942] p-2 rounded-lg text-sm outline-none placeholder-gray-500">
-        </div>
-
-        <div id="contact-list" class="flex-1 overflow-y-auto">
-            </div>
-
-        <div class="p-4 bg-[#202c33] text-xs">
-            Your Vibe Number: <span id="my-id" class="text-green-500 font-mono select-all">Connecting...</span>
-        </div>
-    </aside>
-
-    <main id="chat-panel" class="hidden md:flex flex-1 flex flex-col relative z-10">
-        <header class="wa-header p-3 flex justify-between items-center shadow-md">
-            <div class="flex items-center gap-3">
-                <button onclick="closeChat()" class="md:hidden text-xl mr-2">←</button>
-                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">👤</div>
-                <div>
-                    <h2 id="active-contact-name" class="font-semibold text-sm">Select a contact</h2>
-                    <p class="text-xs text-green-500">online</p>
+    <div id="login-screen" class="fixed inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6">
+        <div class="bg-[#202c33] p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-700">
+            <h1 class="text-3xl font-bold mb-2 text-green-500">VibeWorld</h1>
+            <p class="text-gray-400 text-sm mb-6">Enter details to start encrypted session</p>
+            
+            <div class="space-y-4 mb-6 text-left">
+                <label class="text-[10px] uppercase text-gray-500 font-bold ml-1">Your Details</label>
+                <div class="flex gap-2">
+                    <input id="my-country" type="text" placeholder="+254" class="w-20 bg-[#2a3942] p-3 rounded-lg text-sm outline-none border-none">
+                    <input id="my-local-num" type="tel" placeholder="Your Number" class="flex-1 p-3 bg-[#2a3942] rounded-lg outline-none">
                 </div>
+                <input id="my-email" type="email" placeholder="Your Email (Login Alert)" class="w-full p-3 bg-[#2a3942] rounded-lg outline-none">
+                
+                <hr class="border-gray-700 my-4">
+                
+                <label class="text-[10px] uppercase text-gray-500 font-bold ml-1">Connect to Receiver</label>
+                <input id="dest-num" type="tel" placeholder="Receiver Full Number (e.g. 254...)" class="w-full p-3 border-2 border-green-900 bg-[#2a3942] rounded-lg outline-none">
             </div>
-            <div class="flex gap-6 text-xl text-gray-400 mr-2">
-                <button onclick="makeCall('video')">📹</button>
-                <button onclick="makeCall('audio')">📞</button>
-            </div>
-        </header>
-
-        <div id="chat-messages" class="flex-1 wa-chat-bg overflow-y-auto p-4 flex flex-col gap-3">
-            </div>
-
-        <footer class="wa-input-bar p-3 flex items-center gap-3">
-            <input type="file" id="img-upload" class="hidden" accept="image/*" onchange="handleImage(this)">
-            <button onclick="document.getElementById('img-upload').click()" class="text-2xl text-gray-400">📎</button>
-            <input id="msg-input" type="text" placeholder="Type a message" class="flex-1 bg-[#2a3942] p-2.5 rounded-lg outline-none text-sm">
-            <button onclick="sendText()" class="text-green-500 text-2xl">➤</button>
-        </footer>
-    </main>
-
-    <div id="call-screen" class="fixed inset-0 bg-black hidden z-50 flex flex-col items-center justify-center">
-        <video id="remote-video" autoplay class="w-full h-full object-cover"></video>
-        <div class="absolute top-10 text-center">
-            <h2 id="caller-display" class="text-2xl font-bold">Calling...</h2>
+            
+            <button onclick="globalLogin()" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold transition uppercase">
+                Login & Start Chat
+            </button>
         </div>
-        <button onclick="endCall()" class="absolute bottom-10 bg-red-600 p-5 rounded-full text-white shadow-2xl">Hang Up</button>
+    </div>
+
+    <div id="app-interface" class="flex h-full hidden">
+        <aside class="w-full md:w-1/4 wa-sidebar flex flex-col">
+            <header class="p-4 bg-[#202c33] border-b border-gray-800">
+                <p id="my-id-label" class="text-xs text-green-500 font-bold uppercase"></p>
+                <p id="my-email-label" class="text-[10px] opacity-50 truncate"></p>
+            </header>
+            <div class="p-4 bg-[#2a3942] border-l-4 border-green-500 mt-2">
+                <p id="active-target-display" class="text-sm font-bold truncate"></p>
+                <p class="text-[10px] text-gray-400">Secure Connection Established</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col">
+            <header class="p-4 wa-header flex justify-between items-center shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">👤</div>
+                    <h2 id="chat-header-name" class="font-bold text-sm">...</h2>
+                </div>
+                <button onclick="initCall()" class="text-xl px-4 text-gray-400 hover:text-white transition">📞</button>
+            </header>
+            
+            <div id="message-container" class="flex-1 p-6 overflow-y-auto flex flex-col gap-3" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; background-color: #0b141a;"></div>
+            
+            <footer class="p-4 wa-header flex gap-3">
+                <input id="chat-input" type="text" placeholder="Keep the vibe going..." class="flex-1 bg-[#2a3942] p-3 rounded-xl outline-none text-sm">
+                <button onclick="sendVibe()" class="text-green-500 font-bold px-4">SEND</button>
+            </footer>
+        </main>
+    </div>
+
+    <div id="call-ui" class="fixed inset-0 bg-black hidden z-[100] flex flex-col items-center justify-center">
+        <video id="remote-stream" autoplay class="w-full h-full object-cover"></video>
+        <button onclick="location.reload()" class="absolute bottom-10 bg-red-600 p-6 rounded-full text-white shadow-xl">END CALL</button>
     </div>
 
     <script>
-        const peer = new Peer();
-        let currentConn = null;
-        let activeId = null;
-        let contacts = JSON.parse(localStorage.getItem('vibe_contacts') || '{}');
+        let peer, conn, myFullNum, targetNum;
+        const SERVICE_ID = "service_e482kwr"; // Your Service ID
+        const PUBLIC_KEY = "YOUR_PUBLIC_KEY"; // Replace with your Public Key
+        const TEMPLATE_ID = "YOUR_TEMPLATE_ID"; // Replace with your Template ID
 
-        // INITIALIZE
-        peer.on('open', id => {
-            document.getElementById('my-id').innerText = id;
-            renderContacts();
-        });
+        emailjs.init(PUBLIC_KEY);
 
-        // RECOGNIZE INCOMING CALLS
-        peer.on('call', call => {
-            const callerId = call.metadata.callerId;
-            const name = contacts[callerId] ? "Vibe Friend" : callerId.substring(0,8);
-            
-            if(confirm(`Incoming call from ${name}. Accept?`)) {
-                navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
-                    call.answer(stream);
-                    document.getElementById('call-screen').classList.remove('hidden');
-                    call.on('stream', s => document.getElementById('remote-video').srcObject = s);
-                });
-            }
-        });
+        function globalLogin() {
+            const country = document.getElementById('my-country').value.replace('+', '');
+            const local = document.getElementById('my-local-num').value;
+            const email = document.getElementById('my-email').value;
+            targetNum = document.getElementById('dest-num').value.replace('+', '');
 
-        // RECOGNIZE INCOMING TEXT/CONNECTION
-        peer.on('connection', conn => {
-            saveContact(conn.peer);
-            setupConnection(conn);
-        });
+            if(!local || !email || !targetNum) return alert("All fields are required!");
 
-        function addNewContact() {
-            const id = prompt("Enter Receiver Vibe Number:");
-            if(id) {
-                saveContact(id);
-                openChat(id);
-            }
-        }
+            myFullNum = country + local;
+            peer = new Peer(myFullNum);
 
-        function saveContact(id) {
-            if(!contacts[id]) {
-                contacts[id] = { id: id, history: [] };
-                localStorage.setItem('vibe_contacts', JSON.stringify(contacts));
-                renderContacts();
-            }
-        }
+            peer.on('open', id => {
+                localStorage.setItem('vibe_user', JSON.stringify({num: id, email: email, country: country}));
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-interface').classList.remove('hidden');
+                document.getElementById('my-id-label').innerText = "+" + id;
+                document.getElementById('my-email-label').innerText = email;
+                document.getElementById('active-target-display').innerText = "+" + targetNum;
+                document.getElementById('chat-header-name').innerText = "+" + targetNum;
 
-        function renderContacts() {
-            const list = document.getElementById('contact-list');
-            list.innerHTML = '';
-            Object.keys(contacts).forEach(id => {
-                const div = document.createElement('div');
-                div.className = "p-4 flex items-center gap-3 cursor-pointer hover:bg-[#202c33] border-b border-[#222d34]";
-                div.onclick = () => openChat(id);
-                div.innerHTML = `
-                    <div class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">👤</div>
-                    <div class="flex-1">
-                        <div class="flex justify-between"><span class="font-bold text-sm">${id.substring(0,8)}</span></div>
-                        <p class="text-xs text-gray-500 truncate">Tap to keep the vibe going...</p>
-                    </div>
-                `;
-                list.appendChild(div);
+                sendEmailAlert(email, id);
+                connectToReceiver(targetNum);
+            });
+
+            peer.on('connection', c => {
+                conn = c;
+                setupChat();
+            });
+
+            peer.on('call', call => {
+                if(confirm("Incoming Global Call. Answer?")) {
+                    navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(s => {
+                        call.answer(s);
+                        showCall(call);
+                    });
+                }
             });
         }
 
-        function openChat(id) {
-            activeId = id;
-            document.getElementById('sidebar').classList.add('hidden', 'md:flex');
-            document.getElementById('chat-panel').classList.remove('hidden');
-            document.getElementById('active-contact-name').innerText = id.substring(0,12) + "...";
-            document.getElementById('chat-messages').innerHTML = '';
-            
-            // Load history
-            contacts[id].history.forEach(m => addMessageToUI(m.text, m.type, m.sender));
+        function connectToReceiver(id) {
+            conn = peer.connect(id);
+            conn.on('open', setupChat);
+        }
 
-            if(!currentConn || currentConn.peer !== id) {
-                currentConn = peer.connect(id);
-                setupConnection(currentConn);
+        function setupChat() {
+            conn.on('data', data => displayMessage(data, 'them'));
+        }
+
+        function sendEmailAlert(email, id) {
+            emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+                to_email: email,
+                message: `Active session for +${id} has started.`
+            }).then(() => console.log("Login notification sent."));
+        }
+
+        function sendVibe() {
+            const val = document.getElementById('chat-input').value;
+            if(conn && val) {
+                conn.send(val);
+                displayMessage(val, 'me');
+                document.getElementById('chat-input').value = '';
             }
         }
 
-        function closeChat() {
-            document.getElementById('chat-panel').classList.add('hidden');
-            document.getElementById('sidebar').classList.remove('hidden');
-        }
-
-        function setupConnection(conn) {
-            currentConn = conn;
-            conn.on('data', data => {
-                saveMessage(conn.peer, data.content, data.type, 'them');
-                if(activeId === conn.peer) addMessageToUI(data.content, data.type, 'them');
-            });
-        }
-
-        function sendText() {
-            const val = document.getElementById('msg-input').value;
-            if(currentConn && val) {
-                const packet = { type: 'text', content: val };
-                currentConn.send(packet);
-                saveMessage(activeId, val, 'text', 'me');
-                addMessageToUI(val, 'text', 'me');
-                document.getElementById('msg-input').value = '';
-            }
-        }
-
-        function handleImage(input) {
-            const file = input.files[0];
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const packet = { type: 'image', content: e.target.result };
-                currentConn.send(packet);
-                saveMessage(activeId, packet.content, 'image', 'me');
-                addMessageToUI(packet.content, 'image', 'me');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function saveMessage(contactId, content, type, sender) {
-            contacts[contactId].history.push({ text: content, type: type, sender: sender });
-            localStorage.setItem('vibe_contacts', JSON.stringify(contacts));
-        }
-
-        function addMessageToUI(content, type, sender) {
-            const container = document.getElementById('chat-messages');
+        function displayMessage(text, sender) {
+            const box = document.getElementById('message-container');
             const div = document.createElement('div');
-            div.className = `p-2 px-3 text-sm shadow-sm max-w-[80%] ${sender === 'me' ? 'wa-message-me self-end' : 'wa-message-them self-start'}`;
-            
-            if(type === 'image') {
-                div.innerHTML = `<img src="${content}" class="rounded-lg max-w-full">`;
-            } else {
-                div.innerText = content;
-            }
-            
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
+            div.className = `p-3 px-5 max-w-[80%] text-sm shadow-lg ${sender === 'me' ? 'wa-message-me self-end' : 'wa-message-them self-start'}`;
+            div.innerText = text;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         }
 
-        function makeCall(type) {
-            if(!activeId) return;
-            navigator.mediaDevices.getUserMedia({video: type === 'video', audio: true}).then(stream => {
-                const call = peer.call(activeId, stream, { metadata: { callerId: peer.id } });
-                document.getElementById('call-screen').classList.remove('hidden');
-                call.on('stream', s => document.getElementById('remote-video').srcObject = s);
+        function initCall() {
+            navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(s => {
+                const call = peer.call(conn.peer, s);
+                showCall(call);
             });
         }
 
-        function endCall() { location.reload(); }
+        function showCall(call) {
+            document.getElementById('call-ui').classList.remove('hidden');
+            call.on('stream', s => document.getElementById('remote-stream').srcObject = s);
+        }
+
+        // AUTO-RECOGNITION ON LOAD
+        window.onload = () => {
+            const saved = localStorage.getItem('vibe_user');
+            if(saved) {
+                const user = JSON.parse(saved);
+                document.getElementById('my-country').value = "+" + (user.country || "");
+                document.getElementById('my-local-num').value = user.num.replace(user.country, "");
+                document.getElementById('my-email').value = user.email;
+            }
+        };
     </script>
 </body>
 </html>
