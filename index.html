@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeChat Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        .wa-dark { background-color: #111b21; }
+        .wa-sidebar { background-color: #111b21; border-right: 1px solid #222d34; }
+        .wa-chat-bg { background-color: #0b141a; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; opacity: 0.9; }
+        .wa-message-me { background-color: #005c4b; color: #e9edef; }
+        .wa-message-them { background-color: #202c33; color: #e9edef; }
+        .wa-header { background-color: #202c33; }
+        .wa-input { background-color: #2a3942; }
+    </style>
+</head>
+<body class="h-screen flex bg-[#0b141a] text-[#e9edef] overflow-hidden">
+
+    <aside class="w-1/3 wa-sidebar flex flex-col">
+        <header class="wa-header p-4 flex justify-between items-center">
+            <div class="w-10 h-10 bg-gray-500 rounded-full" id="my-avatar"></div>
+            <div class="flex gap-4 text-gray-400">
+                <button onclick="addNewContact()" title="Add New Contact">➕</button>
+                <span>⋮</span>
+            </div>
+        </header>
+        
+        <div class="p-2 wa-header">
+            <input type="text" placeholder="Search or start new chat" class="w-full wa-input p-2 rounded-lg text-sm outline-none">
+        </div>
+
+        <div id="contact-list" class="flex-1 overflow-y-auto">
+            </div>
+        
+        <div class="p-4 text-xs text-gray-500 border-t border-gray-700">
+            My ID: <span id="my-id" class="select-all text-green-500 font-mono">Loading...</span>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative">
+        <div id="no-chat-selected" class="absolute inset-0 z-10 wa-dark flex flex-col items-center justify-center text-center p-10">
+            <img src="https://static.whatsapp.net/rsrc.php/v3/y6/r/wa669ae5z23.png" class="w-64 opacity-20 mb-6">
+            <h1 class="text-2xl font-light text-gray-300">VibeChat for Web</h1>
+            <p class="text-gray-500 mt-2 text-sm">Send and receive messages without keeping your phone online.</p>
+        </div>
+
+        <header class="wa-header p-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">👤</div>
+                <div>
+                    <h2 id="current-chat-name" class="font-semibold text-sm">Select a contact</h2>
+                    <p class="text-xs text-gray-400">online</p>
+                </div>
+            </div>
+            <div class="flex gap-6 text-xl text-gray-400">
+                <button onclick="makeCall('video')">📹</button>
+                <button onclick="makeCall('audio')">📞</button>
+            </div>
+        </header>
+
+        <div id="chat-messages" class="flex-1 wa-chat-bg overflow-y-auto p-6 flex flex-col gap-2"></div>
+
+        <footer class="wa-header p-3 flex items-center gap-3">
+            <button class="text-2xl text-gray-400">📎</button>
+            <input id="msg-input" type="text" placeholder="Type a message" class="flex-1 wa-input p-2 rounded-lg outline-none">
+            <button onclick="sendMessage()" class="text-gray-400">➤</button>
+        </footer>
+    </main>
+
+    <div id="call-screen" class="fixed inset-0 bg-black hidden z-50 flex flex-col items-center justify-center">
+        <video id="remote-video" autoplay class="w-full h-full object-cover"></video>
+        <div class="absolute bottom-10 flex gap-10">
+            <button onclick="endCall()" class="bg-red-500 p-4 rounded-full text-white w-16 h-16">❌</button>
+        </div>
+    </div>
+
+    <script>
+        const peer = new Peer();
+        let activeConn = null;
+        let activeId = null;
+        let contacts = JSON.parse(localStorage.getItem('vibe_contacts') || '{}');
+
+        peer.on('open', id => {
+            document.getElementById('my-id').innerText = id;
+            renderContacts();
+        });
+
+        // Handle incoming calls
+        peer.on('call', call => {
+            if(confirm("Incoming Vibe Call. Accept?")) {
+                navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(stream => {
+                    call.answer(stream);
+                    document.getElementById('call-screen').classList.remove('hidden');
+                    call.on('stream', s => document.getElementById('remote-video').srcObject = s);
+                });
+            }
+        });
+
+        // Handle incoming text
+        peer.on('connection', conn => {
+            saveContact(conn.peer);
+            setupConnection(conn);
+        });
+
+        function addNewContact() {
+            const id = prompt("Enter Receiver's Number (Peer ID):");
+            if(id) {
+                saveContact(id);
+                openChat(id);
+            }
+        }
+
+        function saveContact(id) {
+            if(!contacts[id]) {
+                contacts[id] = { id: id, lastSeen: Date.now(), history: [] };
+                localStorage.setItem('vibe_contacts', JSON.stringify(contacts));
+                renderContacts();
+            }
+        }
+
+        function renderContacts() {
+            const list = document.getElementById('contact-list');
+            list.innerHTML = '';
+            Object.keys(contacts).forEach(id => {
+                const div = document.createElement('div');
+                div.className = "p-4 flex items-center gap-3 cursor-pointer hover:bg-[#202c33] border-b border-gray-800";
+                div.onclick = () => openChat(id);
+                div.innerHTML = `
+                    <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">👤</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between"><span class="font-bold text-sm">${id.substring(0,8)}</span><span class="text-xs text-gray-500">12:00</span></div>
+                        <p class="text-xs text-gray-400 truncate">Keep the vibe flowing...</p>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function openChat(id) {
+            activeId = id;
+            document.getElementById('no-chat-selected').classList.add('hidden');
+            document.getElementById('current-chat-name').innerText = id;
+            document.getElementById('chat-messages').innerHTML = '';
+            
+            // Reconnect if needed
+            if(!activeConn || activeConn.peer !== id) {
+                activeConn = peer.connect(id);
+                setupConnection(activeConn);
+            }
+        }
+
+        function setupConnection(conn) {
+            activeConn = conn;
+            conn.on('data', data => {
+                if(activeId === conn.peer) addMessage(data, 'them');
+            });
+        }
+
+        function sendMessage() {
+            const val = document.getElementById('msg-input').value;
+            if(activeConn && val) {
+                activeConn.send(val);
+                addMessage(val, 'me');
+                document.getElementById('msg-input').value = '' ;
+            }
+        }
+
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `p-2 px-4 rounded-lg text-sm max-w-[70%] shadow ${sender === 'me' ? 'wa-message-me self-end' : 'wa-message-them self-start'}`;
+            div.innerText = text;
+            document.getElementById('chat-messages').appendChild(div);
+            document.getElementById('chat-messages').scrollTop = 100000;
+        }
+
+        function makeCall(type) {
+            if(!activeId) return;
+            navigator.mediaDevices.getUserMedia({video: type === 'video', audio: true}).then(stream => {
+                const call = peer.call(activeId, stream);
+                document.getElementById('call-screen').classList.remove('hidden');
+                call.on('stream', s => document.getElementById('remote-video').srcObject = s);
+            });
+        }
+
+        function endCall() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
