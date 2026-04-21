@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FileDrop</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#12151f;--bg2:#181c2a;--bg3:#1e2438;--bg4:#252d48;--bg5:#2d3858;
+  --bd:#252d48;--bd2:#323e60;--bd3:#405080;
+  --tx:#e2e8f8;--tx2:#7a8db8;--tx3:#404e70;
+  --blue:#4070ff;--blue2:#2d5ae0;--bluebg:rgba(64,112,255,0.1);--bluebdr:rgba(64,112,255,0.35);
+  --green:#1ec97a;--greenbg:rgba(30,201,122,0.1);--greenbdr:rgba(30,201,122,0.4);
+  --red:#ff3f50;--redbg:rgba(255,63,80,0.1);--redbdr:rgba(255,63,80,0.4);
+  --amber:#ffaa00;--amberbg:rgba(255,170,0,0.1);--ambbdr:rgba(255,170,0,0.4);
+  --r:8px;--rl:12px;--rxl:16px;
+}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:13px}
+body{display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{height:50px;background:var(--bg2);border-bottom:1px solid var(--bd2);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;z-index:10}
+.logo{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;letter-spacing:-.2px}
+.logo-mark{width:28px;height:28px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:15px;height:15px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.status-pill{display:flex;align-items:center;gap:6px;padding:5px 13px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--bd2);color:var(--tx3);transition:.3s}
+.status-pill.ready{color:var(--green);border-color:var(--greenbdr);background:var(--greenbg)}
+.status-pill.connecting{color:var(--amber);border-color:var(--ambbdr);background:var(--amberbg)}
+.status-pill.connected{color:var(--green);border-color:var(--greenbdr);background:var(--greenbg)}
+.status-pill.error{color:var(--red);border-color:var(--redbdr);background:var(--redbg)}
+.sp-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+.sp-dot.pulse{animation:pulse 1.1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* ── SIDEBAR ── */
+.sidebar{width:290px;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-block{padding:18px;border-bottom:1px solid var(--bd)}
+.sb-label{font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--tx3);margin-bottom:14px}
+
+/* ── ADDRESS CARD ── */
+.addr-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--rl);padding:18px;text-align:center}
+.ac-eyebrow{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--tx3);margin-bottom:10px}
+.ac-number{font-family:'Roboto Mono',monospace;font-size:30px;font-weight:500;color:var(--tx);letter-spacing:5px;margin-bottom:4px;min-height:40px;display:flex;align-items:center;justify-content:center;gap:8px}
+.ac-number .seg{display:inline-block}
+.ac-number .sep{color:var(--bd3);font-size:20px;margin:0 -2px}
+.ac-sub{font-size:11px;color:var(--tx3);margin-bottom:14px}
+.ac-actions{display:flex;gap:7px;justify-content:center}
+.ac-btn{background:var(--bg4);border:1px solid var(--bd2);border-radius:6px;padding:6px 16px;font-size:11px;font-weight:600;color:var(--tx2);cursor:pointer;transition:.15s;font-family:'Inter',sans-serif}
+.ac-btn:hover{background:var(--bg5);border-color:var(--bd3);color:var(--tx)}
+.ac-btn.primary{background:var(--blue);border-color:var(--blue);color:white}
+.ac-btn.primary:hover{background:var(--blue2)}
+.ac-status{display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:10px;font-weight:600;color:var(--green)}
+.ac-status-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.ac-status.loading{color:var(--amber)}
+.ac-status.loading .ac-status-dot{background:var(--amber);animation:pulse 1s infinite}
+.ac-status.err{color:var(--red)}
+.ac-status.err .ac-status-dot{background:var(--red)}
+
+/* ── CONNECT FORM ── */
+.conn-form{display:flex;flex-direction:column;gap:8px}
+.cf-row{display:flex;gap:7px}
+.cf-input{flex:1;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px 12px;font-family:'Roboto Mono',monospace;font-size:17px;color:var(--tx);outline:none;transition:.2s;letter-spacing:2.5px;text-align:center;width:100%}
+.cf-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--bluebg)}
+.cf-input::placeholder{color:var(--tx3);font-family:'Inter',sans-serif;font-size:12px;letter-spacing:0;text-align:left}
+.cf-input:disabled{opacity:.4;pointer-events:none}
+.cf-btn{background:var(--blue);color:white;border:none;border-radius:var(--r);padding:10px 16px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.cf-btn:hover{background:var(--blue2)}
+.cf-btn:active{transform:scale(.97)}
+.cf-btn:disabled{background:var(--bg4);color:var(--tx3);pointer-events:none}
+.cf-hint{font-size:11px;color:var(--tx3);line-height:1.5}
+
+/* ── WAITING BOX ── */
+.waiting-box{display:none;background:var(--amberbg);border:1px solid var(--ambbdr);border-radius:var(--r);padding:11px 13px}
+.wb-inner{display:flex;align-items:center;gap:9px}
+.wb-spinner{width:16px;height:16px;border:2px solid rgba(255,170,0,.25);border-top-color:var(--amber);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wb-text{flex:1}
+.wb-title{font-size:11px;font-weight:700;color:var(--amber)}
+.wb-sub{font-size:10px;color:rgba(255,170,0,.7);margin-top:1px}
+.wb-cancel{font-size:11px;color:var(--tx3);cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif;padding:3px;flex-shrink:0}
+.wb-cancel:hover{color:var(--red)}
+
+/* ── PEER LIST ── */
+.peer-list{display:flex;flex-direction:column;gap:5px}
+.peer-empty{font-size:11px;color:var(--tx3);padding:4px 2px}
+.peer-item{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);cursor:pointer;transition:.15s}
+.peer-item:hover{border-color:var(--bd2)}
+.peer-item.active{border-color:var(--blue);background:var(--bluebg)}
+.pi-av{width:30px;height:30px;border-radius:7px;background:var(--greenbg);border:1px solid var(--greenbdr);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--green);flex-shrink:0}
+.pi-info{flex:1;min-width:0}
+.pi-addr{font-family:'Roboto Mono',monospace;font-size:11px;font-weight:500;color:var(--tx)}
+.pi-alias{font-size:10px;color:var(--tx3);margin-top:1px}
+.pi-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.pi-close{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--tx3);cursor:pointer;font-size:15px;line-height:1;flex-shrink:0}
+.pi-close:hover{background:var(--redbg);color:var(--red)}
+
+/* ── MAIN PANEL ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+
+/* IDLE */
+.idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;gap:0}
+.idle-icon{width:70px;height:70px;background:var(--bg2);border:1px solid var(--bd2);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.idle-icon svg{width:32px;height:32px;stroke:var(--tx3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.idle-title{font-size:18px;font-weight:700;color:var(--tx2);margin-bottom:8px}
+.idle-body{font-size:12px;color:var(--tx3);max-width:300px;line-height:1.7}
+.idle-steps{margin-top:24px;display:flex;flex-direction:column;gap:10px;max-width:280px;text-align:left}
+.step{display:flex;align-items:flex-start;gap:10px}
+.step-n{width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--tx3);flex-shrink:0;margin-top:1px}
+.step-t{font-size:12px;color:var(--tx3);line-height:1.5}
+
+/* SESSION */
+.session{flex:1;display:none;flex-direction:column;overflow:hidden}
+.sess-bar{background:var(--bg2);border-bottom:1px solid var(--bd);padding:11px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.sess-av{width:36px;height:36px;border-radius:9px;background:var(--greenbg);border:1px solid var(--greenbdr);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--green)}
+.sess-info{}
+.sess-name{font-size:13px;font-weight:700}
+.sess-addr{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--tx2);margin-top:1px}
+.sess-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.live-badge{display:flex;align-items:center;gap:5px;background:var(--greenbg);border:1px solid var(--greenbdr);border-radius:20px;padding:4px 11px;font-size:10px;font-weight:700;color:var(--green)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.3s infinite}
+.disc-btn{background:var(--redbg);color:var(--red);border:1px solid var(--redbdr);border-radius:var(--r);padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s}
+.disc-btn:hover{background:rgba(255,63,80,.25)}
+
+.sess-content{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+
+/* DROP ZONE */
+.dropzone{border:2px dashed var(--bd2);border-radius:var(--rl);padding:30px 20px;text-align:center;cursor:pointer;transition:.25s;background:var(--bg2);flex-shrink:0}
+.dropzone:hover,.dropzone.drag{border-color:var(--blue);background:var(--bluebg)}
+.dz-inner{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:10px}
+.dz-ico{width:48px;height:48px;background:var(--bg3);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dz-ico svg{width:24px;height:24px;stroke:var(--blue);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.dz-title{font-size:15px;font-weight:700;margin-bottom:3px}
+.dz-sub{font-size:11px;color:var(--tx3)}
+.dz-tags{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
+.dz-tag{font-size:10px;padding:2px 9px;border-radius:10px;border:1px solid var(--bd2);color:var(--tx3)}
+input[type=file]{display:none}
+
+/* PROGRESS */
+.prog-card{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r);padding:13px;display:none;flex-shrink:0}
+.pg-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.pg-name{font-size:12px;font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-pct{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--blue);font-weight:500}
+.pg-track{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.pg-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .2s}
+.pg-sub{font-size:10px;color:var(--tx3);margin-top:6px}
+
+/* FILES */
+.files-section{flex-shrink:0}
+.fs-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.fs-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--tx2)}
+.fs-actions{display:flex;gap:6px;align-items:center}
+.fs-btn{background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:5px 11px;font-size:11px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:'Inter',sans-serif;transition:.15s;display:flex;align-items:center;gap:4px}
+.fs-btn:hover{border-color:var(--bd2);color:var(--tx)}
+.fs-btn.prim{background:var(--blue);border-color:var(--blue);color:white}
+.fs-btn.prim:hover{background:var(--blue2)}
+.fs-btn.danger{color:var(--red)}
+.fs-btn.danger:hover{background:var(--redbg);border-color:var(--redbdr)}
+.sel-lbl{font-size:11px;font-weight:600;color:var(--blue)}
+.files-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.fc{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:.15s;position:relative;user-select:none}
+.fc:hover{border-color:var(--bd2);transform:translateY(-1px)}
+.fc.sel{border-color:var(--blue);background:var(--bluebg)}
+.fc-chk{position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.4);transition:.15s;z-index:2}
+.fc.sel .fc-chk{opacity:1;transform:scale(1)}
+.fc-chk svg{width:9px;height:9px;stroke:white;fill:none;stroke-width:2.5}
+.fc-prev{height:82px;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;font-size:28px}
+.fc-prev img{width:100%;height:100%;object-fit:cover}
+.fc-pbar{position:absolute;bottom:0;left:0;height:3px;background:var(--blue);transition:width .2s}
+.fc-body{padding:8px}
+.fc-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-size{font-size:10px;color:var(--tx3);margin-top:1px}
+.fc-st{font-size:9px;font-weight:700;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.fc-st.sent{color:var(--green)}
+.fc-st.sending{color:var(--blue)}
+.fc-st.recv{color:var(--amber)}
+.files-empty{text-align:center;padding:24px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rl);color:var(--tx3);font-size:12px}
+
+/* INCOMING MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rxl);overflow:hidden;width:360px;max-width:92vw;animation:popIn .22s ease}
+@keyframes popIn{from{transform:scale(.93);opacity:.4}to{transform:scale(1);opacity:1}}
+.modal-top{background:var(--bg3);border-bottom:1px solid var(--bd);padding:16px 18px;display:flex;align-items:center;gap:12px}
+.modal-top-icon{width:40px;height:40px;border-radius:10px;background:var(--amberbg);border:1px solid var(--ambbdr);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-top-icon svg{width:20px;height:20px;stroke:var(--amber);fill:none;stroke-width:1.5;stroke-linecap:round}
+.modal-top-title{font-size:14px;font-weight:700}
+.modal-top-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.modal-body{padding:18px}
+.modal-from-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.modal-from-num{font-family:'Roboto Mono',monospace;font-size:22px;font-weight:500;color:var(--tx);letter-spacing:3px}
+.modal-from-label{font-size:10px;color:var(--tx3);margin-top:3px}
+.modal-note{font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:16px}
+.modal-btns{display:flex;gap:8px}
+.modal-btn{flex:1;padding:11px;border-radius:var(--r);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;border:none}
+.modal-btn.accept{background:var(--green);color:#051a0c}
+.modal-btn.accept:hover{background:#18b86e}
+.modal-btn.deny{background:var(--redbg);color:var(--red);border:1px solid var(--redbdr)}
+.modal-btn.deny:hover{background:rgba(255,63,80,.2)}
+
+/* TOASTS */
+.toast-stack{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:6px;z-index:2000;pointer-events:none}
+.toast{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px 14px;font-size:12px;max-width:250px;transform:translateY(8px);opacity:0;transition:.25s;border-left:3px solid var(--bd2)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-left-color:var(--green)}
+.toast.err{border-left-color:var(--red)}
+.toast.info{border-left-color:var(--blue)}
+.toast.warn{border-left-color:var(--amber)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:10px}
+</style>
+</head>
+<body>
+
+<!-- INCOMING REQUEST MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-top">
+      <div class="modal-top-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.8 19.8 0 0 1 1.62 3.38 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72 12 12 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45 12 12 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <div>
+        <div class="modal-top-title">Incoming connection request</div>
+        <div class="modal-top-sub">Someone wants to connect to your device</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-from-card">
+        <div>
+          <div class="modal-from-num" id="modalFromNum">—</div>
+          <div class="modal-from-label">wants to connect and transfer files</div>
+        </div>
+      </div>
+      <div class="modal-note">Only accept from people you trust. They can send you files once connected.</div>
+      <div class="modal-btns">
+        <button class="modal-btn accept" id="acceptBtn" onclick="acceptConn()">Accept</button>
+        <button class="modal-btn deny" onclick="denyConn()">Deny</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 15 15"><circle cx="7.5" cy="7.5" r="3"/><path d="M7.5 1v3M7.5 11v3M1 7.5h3M11 7.5h3"/></svg>
+    </div>
+    FileDrop
+  </div>
+  <div class="topbar-right">
+    <div class="status-pill" id="statusPill">
+      <div class="sp-dot pulse" id="statusDot"></div>
+      <span id="statusTxt">Connecting…</span>
+    </div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- MY ADDRESS -->
+    <div class="sb-block">
+      <div class="sb-label">My address</div>
+      <div class="addr-card">
+        <div class="ac-eyebrow">Your FileDrop ID</div>
+        <div class="ac-number" id="myAddrNum">
+          <span class="seg" id="seg1">···</span>
+          <span class="sep">·</span>
+          <span class="seg" id="seg2">···</span>
+          <span class="sep">·</span>
+          <span class="seg" id="seg3">···</span>
+        </div>
+        <div class="ac-sub" id="myAliasText">Initialising…</div>
+        <div class="ac-actions">
+          <button class="ac-btn" onclick="copyAddr()">Copy</button>
+          <button class="ac-btn primary" onclick="copyAddr()">Share</button>
+        </div>
+        <div class="ac-status loading" id="addrStatus">
+          <div class="ac-status-dot"></div>
+          <span id="addrStatusTxt">Connecting to server…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONNECT FORM -->
+    <div class="sb-block">
+      <div class="sb-label">Connect to device</div>
+      <div class="conn-form">
+        <div class="cf-row">
+          <input class="cf-input" id="remoteInput" type="text" placeholder="Enter 9-digit address" maxlength="11" oninput="fmtInput(this)" onkeydown="if(event.key==='Enter')sendRequest()">
+          <button class="cf-btn" id="connBtn" onclick="sendRequest()">Connect</button>
+        </div>
+        <div class="cf-hint" id="connHint">Enter the address shown on the other device</div>
+        <div class="waiting-box" id="waitBox">
+          <div class="wb-inner">
+            <div class="wb-spinner"></div>
+            <div class="wb-text">
+              <div class="wb-title">Waiting for acceptance…</div>
+              <div class="wb-sub" id="waitSub">Requesting —</div>
+            </div>
+            <button class="wb-cancel" onclick="cancelReq()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PEER LIST -->
+    <div class="sb-block" style="flex:1;border-bottom:none">
+      <div class="sb-label">Connected — <span id="peerCount">0</span> / 10</div>
+      <div class="peer-list" id="peerList">
+        <div class="peer-empty">No connections yet</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainPanel">
+
+    <!-- IDLE -->
+    <div class="idle" id="idleScreen">
+      <div class="idle-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="idle-title">Ready to transfer</div>
+      <div class="idle-body">Share your address with another device or enter their address to connect.</div>
+      <div class="idle-steps">
+        <div class="step"><div class="step-n">1</div><div class="step-t">Copy your address and send it to someone</div></div>
+        <div class="step"><div class="step-n">2</div><div class="step-t">They enter it and click Connect</div></div>
+        <div class="step"><div class="step-n">3</div><div class="step-t">You see a popup — accept to start the session</div></div>
+        <div class="step"><div class="step-n">4</div><div class="step-t">Drop files to send instantly</div></div>
+      </div>
+    </div>
+
+    <!-- SESSION -->
+    <div class="session" id="sessionView">
+      <div class="sess-bar">
+        <div class="sess-av" id="sessAv">?</div>
+        <div class="sess-info">
+          <div class="sess-name" id="sessName">—</div>
+          <div class="sess-addr" id="sessAddr">—</div>
+        </div>
+        <div class="sess-right">
+          <div class="live-badge"><div class="live-dot"></div>Live</div>
+          <button class="disc-btn" onclick="disconnectActive()">Disconnect</button>
+        </div>
+      </div>
+
+      <div class="sess-content">
+        <div class="dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
+          <div class="dz-inner">
+            <div class="dz-ico">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div>
+              <div class="dz-title">Drop files here to send</div>
+              <div class="dz-sub">or click to browse — any file type</div>
+            </div>
+          </div>
+          <div class="dz-tags">
+            <span class="dz-tag">Images</span>
+            <span class="dz-tag">PDFs</span>
+            <span class="dz-tag">Videos</span>
+            <span class="dz-tag">Documents</span>
+            <span class="dz-tag">Any file</span>
+          </div>
+        </div>
+        <input type="file" id="fileInput" multiple onchange="onFileSelect(event)">
+
+        <div class="prog-card" id="progCard">
+          <div class="pg-top">
+            <span class="pg-name" id="pgName">Sending…</span>
+            <span class="pg-pct" id="pgPct">0%</span>
+          </div>
+          <div class="pg-track"><div class="pg-fill" id="pgFill" style="width:0%"></div></div>
+          <div class="pg-sub" id="pgSub">Preparing…</div>
+        </div>
+
+        <div class="files-section" id="filesSection">
+          <div class="fs-hd">
+            <div class="fs-title">Files</div>
+            <div class="fs-actions" id="fsActNormal">
+              <button class="fs-btn" onclick="selectAll()">Select all</button>
+            </div>
+            <div class="fs-actions" id="fsActSel" style="display:none">
+              <span class="sel-lbl" id="selLbl">0 selected</span>
+              <button class="fs-btn prim" onclick="downloadSelected()">
+                <svg width="11" height="11" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </button>
+              <button class="fs-btn danger" onclick="removeSelected()">Remove</button>
+            </div>
+          </div>
+          <div class="files-grid" id="filesGrid">
+            <div class="files-empty">No files yet — drop something to send</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const ALIASES = ['My Laptop','Home PC','Work Mac','Studio PC','Dev Machine','Office Laptop','MacBook','Desktop PC','Surface','Chromebook'];
+let myId = '', myAlias = '', peer = null, conns = {}, activePeerId = null;
+let pendingConn = null, sendTimer = null;
+let peerFiles = {};
+let selected = new Set();
+
+// ── UTILS ──
+function fmt(raw) {
+  const d = raw.replace(/\D/g,'').slice(0,9);
+  const m = d.match(/^(\d{1,3})(\d{0,3})(\d{0,3})$/);
+  if (!m) return d;
+  return [m[1], m[2], m[3]].filter(x => x).join(' ');
+}
+function fmtInput(el) { el.value = fmt(el.value); }
+function fsz(b) {
+  if (b < 1024) return b + 'B';
+  if (b < 1048576) return (b/1024).toFixed(1) + 'KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + 'MB';
+  return (b/1073741824).toFixed(2) + 'GB';
+}
+function ftype(name) {
+  const e = (name.split('.').pop()||'').toLowerCase();
+  if (['jpg','jpeg','png','gif','webp','svg','bmp','ico'].includes(e)) return 'image';
+  if (['mp4','mov','avi','mkv','webm','flv'].includes(e)) return 'video';
+  if (e === 'pdf') return 'pdf';
+  if (['doc','docx','xls','xlsx','ppt','pptx','txt','md','csv'].includes(e)) return 'doc';
+  return 'other';
+}
+function femoji(t) { return {image:'🖼',video:'🎬',pdf:'📄',doc:'📝',other:'📦'}[t]||'📦'; }
+
+function toast(msg, type = 'info') {
+  const stack = document.getElementById('toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  stack.appendChild(el);
+  setTimeout(() => el.classList.add('show'), 10);
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+function setStatus(state, txt) {
+  const pill = document.getElementById('statusPill');
+  const dot = document.getElementById('statusDot');
+  const label = document.getElementById('statusTxt');
+  pill.className = 'status-pill ' + state;
+  dot.className = 'sp-dot' + (state === 'connecting' ? ' pulse' : '');
+  label.textContent = txt;
+}
+
+function setAddrStatus(state, txt) {
+  const el = document.getElementById('addrStatus');
+  const t = document.getElementById('addrStatusTxt');
+  el.className = 'ac-status ' + state;
+  t.textContent = txt;
+}
+
+// ── PEERJS INIT ──
+function initPeer() {
+  // Generate a readable 9-digit ID
+  const digits = Array.from({length:9}, () => Math.floor(Math.random()*10)).join('');
+  const peerId = 'fd-' + digits;
+
+  peer = new Peer(peerId, {
+    debug: 0
+  });
+
+  peer.on('open', (id) => {
+    myId = id.replace('fd-','');
+    const formatted = fmt(myId);
+    document.getElementById('seg1').textContent = formatted.split(' ')[0] || '···';
+    document.getElementById('seg2').textContent = formatted.split(' ')[1] || '···';
+    document.getElementById('seg3').textContent = formatted.split(' ')[2] || '···';
+    myAlias = ALIASES[Math.floor(Math.random() * ALIASES.length)];
+    document.getElementById('myAliasText').textContent = myAlias;
+    setAddrStatus('ready', 'Online — ready to connect');
+    setStatus('ready', 'Ready');
+    toast('Your address: ' + formatted, 'ok');
+  });
+
+  peer.on('connection', (conn) => {
+    handleIncoming(conn);
+  });
+
+  peer.on('error', (err) => {
+    if (err.type === 'peer-unavailable') {
+      document.getElementById('waitBox').style.display = 'none';
+      document.getElementById('connBtn').disabled = false;
+      document.getElementById('remoteInput').disabled = false;
+      document.getElementById('connHint').textContent = 'Address not found or device is offline';
+      setStatus('ready', 'Ready');
+      toast('Device not found — check the address', 'err');
+    } else if (err.type === 'network' || err.type === 'server-error') {
+      setAddrStatus('err', 'Server error — retrying…');
+      setStatus('error', 'Connection error');
+      setTimeout(initPeer, 4000);
+    } else {
+      console.warn('PeerJS error:', err.type, err.message);
+    }
+  });
+
+  peer.on('disconnected', () => {
+    setAddrStatus('loading', 'Reconnecting…');
+    peer.reconnect();
+  });
+}
+
+// ── INCOMING CONNECTION ──
+function handleIncoming(conn) {
+  conn.on('open', () => {
+    // First message is a handshake with alias
+    conn.once('data', (data) => {
+      if (data.type === 'handshake') {
+        pendingConn = { conn, alias: data.alias, peerId: conn.peer };
+        document.getElementById('modalFromNum').textContent = fmt(conn.peer.replace('fd-',''));
+        document.getElementById('modalOverlay').classList.add('open');
+        toast('Incoming request from ' + fmt(conn.peer.replace('fd-','')), 'warn');
+
+        // Listen for more data after accept
+        conn.on('data', (msg) => handleData(conn.peer, msg));
+      }
+    });
+  });
+  conn.on('close', () => {
+    if (conns[conn.peer]) { removePeer(conn.peer); toast(fmt(conn.peer.replace('fd-','')) + ' disconnected', 'info'); }
+  });
+  conn.on('error', () => {
+    if (conns[conn.peer]) removePeer(conn.peer);
+  });
+}
+
+function acceptConn() {
+  if (!pendingConn) return;
+  const { conn, alias } = pendingConn;
+  document.getElementById('modalOverlay').classList.remove('open');
+  conn.send({ type: 'accepted', alias: myAlias });
+  addPeer(conn.peer, alias, conn);
+  pendingConn = null;
+  toast('Connected to ' + alias, 'ok');
+}
+
+function denyConn() {
+  if (!pendingConn) return;
+  pendingConn.conn.send({ type: 'denied' });
+  pendingConn.conn.close();
+  document.getElementById('modalOverlay').classList.remove('open');
+  pendingConn = null;
+  toast('Request denied', 'info');
+}
+
+// ── SEND REQUEST ──
+function sendRequest() {
+  const raw = document.getElementById('remoteInput').value.replace(/\D/g,'');
+  if (raw.length < 6) { toast('Enter a valid 9-digit address', 'err'); return; }
+  const targetId = 'fd-' + raw.padEnd(9,'0').slice(0,9);
+  const formatted = fmt(raw.slice(0,9));
+  if (raw === myId) { toast("That's your own address", 'err'); return; }
+  if (conns[targetId]) { toast('Already connected to ' + formatted, 'info'); return; }
+  if (Object.keys(conns).length >= 10) { toast('Max 10 connections reached', 'err'); return; }
+
+  document.getElementById('connBtn').disabled = true;
+  document.getElementById('remoteInput').disabled = true;
+  document.getElementById('waitBox').style.display = 'block';
+  document.getElementById('waitSub').textContent = 'Requesting ' + formatted + '…';
+  setStatus('connecting', 'Connecting…');
+
+  const conn = peer.connect(targetId, { reliable: true });
+
+  conn.on('open', () => {
+    conn.send({ type: 'handshake', alias: myAlias });
+    conn.on('data', (msg) => {
+      if (msg.type === 'accepted') {
+        document.getElementById('waitBox').style.display = 'none';
+        document.getElementById('connBtn').disabled = false;
+        document.getElementById('remoteInput').disabled = false;
+        document.getElementById('remoteInput').value = '';
+        document.getElementById('connHint').textContent = 'Connected to ' + formatted;
+        addPeer(targetId, msg.alias || formatted, conn);
+        toast('Connected to ' + formatted, 'ok');
+      } else if (msg.type === 'denied') {
+        cancelReq();
+        toast('Request denied by ' + formatted, 'warn');
+      } else {
+        handleData(targetId, msg);
+      }
+    });
+    conn.on('close', () => {
+      if (conns[targetId]) { removePeer(targetId); toast(formatted + ' disconnected', 'info'); }
+    });
+  });
+
+  conn.on('error', () => {
+    cancelReq();
+    toast('Could not reach ' + formatted, 'err');
+  });
+}
+
+function cancelReq() {
+  document.getElementById('waitBox').style.display = 'none';
+  document.getElementById('connBtn').disabled = false;
+  document.getElementById('remoteInput').disabled = false;
+  document.getElementById('connHint').textContent = 'Enter the address shown on the other device';
+  setStatus(Object.keys(conns).length > 0 ? 'connected' : 'ready', Object.keys(conns).length > 0 ? Object.keys(conns).length + ' connected' : 'Ready');
+  toast('Request cancelled', 'info');
+}
+
+// ── PEERS ──
+function addPeer(peerId, alias, conn) {
+  conns[peerId] = conn;
+  if (!peerFiles[peerId]) peerFiles[peerId] = [];
+  renderPeers();
+  setStatus('connected', Object.keys(conns).length + ' connected');
+  if (!activePeerId) setActivePeer(peerId);
+}
+
+function removePeer(peerId) {
+  delete conns[peerId];
+  if (activePeerId === peerId) {
+    activePeerId = null;
+    const remaining = Object.keys(conns);
+    if (remaining.length) setActivePeer(remaining[0]);
+    else {
+      document.getElementById('sessionView').style.display = 'none';
+      document.getElementById('idleScreen').style.display = 'flex';
+    }
+  }
+  renderPeers();
+  const count = Object.keys(conns).length;
+  setStatus(count > 0 ? 'connected' : 'ready', count > 0 ? count + ' connected' : 'Ready');
+}
+
+function renderPeers() {
+  const el = document.getElementById('peerList');
+  const count = Object.keys(conns).length;
+  document.getElementById('peerCount').textContent = count;
+  if (!count) { el.innerHTML = '<div class="peer-empty">No connections yet</div>'; return; }
+  el.innerHTML = Object.keys(conns).map(pid => {
+    const alias = getPeerAlias(pid);
+    const fmtd = fmt(pid.replace('fd-',''));
+    return `<div class="peer-item ${activePeerId===pid?'active':''}" onclick="setActivePeer('${pid}')">
+      <div class="pi-av">${alias.charAt(0).toUpperCase()}</div>
+      <div class="pi-info">
+        <div class="pi-addr">${fmtd}</div>
+        <div class="pi-alias">${alias}</div>
+      </div>
+      <div class="pi-dot"></div>
+      <div class="pi-close" onclick="event.stopPropagation();disconnectPeer('${pid}')">×</div>
+    </div>`;
+  }).join('');
+}
+
+function getPeerAlias(pid) {
+  // Try to find alias from peerFiles metadata
+  const files = peerFiles[pid] || [];
+  const meta = files.find(f => f._alias);
+  return meta ? meta._alias : fmt(pid.replace('fd-',''));
+}
+
+function setActivePeer(peerId) {
+  if (!conns[peerId] && !peerFiles[peerId]) return;
+  activePeerId = peerId;
+  const alias = getPeerAlias(peerId);
+  const fmtd = fmt(peerId.replace('fd-',''));
+  document.getElementById('idleScreen').style.display = 'none';
+  document.getElementById('sessionView').style.display = 'flex';
+  document.getElementById('sessionView').style.flexDirection = 'column';
+  document.getElementById('sessAv').textContent = alias.charAt(0).toUpperCase();
+  document.getElementById('sessName').textContent = alias;
+  document.getElementById('sessAddr').textContent = fmtd;
+  selected.clear();
+  renderFiles();
+  renderPeers();
+}
+
+function disconnectActive() { if (activePeerId) disconnectPeer(activePeerId); }
+function disconnectPeer(pid) {
+  try { if (conns[pid]) conns[pid].close(); } catch(e) {}
+  removePeer(pid);
+  toast('Disconnected', 'info');
+}
+
+// ── FILE TRANSFER ──
+function handleData(peerId, msg) {
+  if (msg.type === 'file-meta') {
+    // Receiving a file
+    const fo = {
+      id: msg.id, name: msg.name, size: msg.size, ftype: msg.ftype,
+      status: 'receiving', progress: 0, direction: 'received',
+      chunks: [], totalChunks: msg.totalChunks, dataUrl: null,
+      _alias: msg.senderAlias
+    };
+    if (!peerFiles[peerId]) peerFiles[peerId] = [];
+    peerFiles[peerId].unshift(fo);
+    if (activePeerId === peerId) renderFiles();
+    toast('Receiving: ' + msg.name, 'info');
+  }
+  if (msg.type === 'file-chunk') {
+    const files = peerFiles[peerId] || [];
+    const fo = files.find(f => f.id === msg.id);
+    if (fo) {
+      fo.chunks.push(msg.data);
+      fo.progress = Math.round((fo.chunks.length / fo.totalChunks) * 100);
+      if (fo.chunks.length === fo.totalChunks) {
+        // Reassemble
+        const blob = new Blob(fo.chunks.map(c => {
+          const bin = atob(c);
+          const arr = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+          return arr;
+        }));
+        const reader = new FileReader();
+        reader.onload = e => {
+          fo.dataUrl = e.target.result;
+          fo.status = 'received';
+          fo.progress = 100;
+          fo.chunks = [];
+          if (activePeerId === peerId) renderFiles();
+          toast('✓ Received: ' + fo.name, 'ok');
+        };
+        reader.readAsDataURL(blob);
+      } else {
+        if (activePeerId === peerId) renderFiles();
+      }
+    }
+  }
+}
+
+function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag'); }
+function onDragLeave() { document.getElementById('dropZone').classList.remove('drag'); }
+function onDrop(e) { e.preventDefault(); onDragLeave(); if (!activePeerId) return; sendFiles([...e.dataTransfer.files]); }
+function onFileSelect(e) { if (!activePeerId) return; sendFiles([...e.target.files]); e.target.value = ''; }
+
+function sendFiles(fileList) {
+  if (!activePeerId || !conns[activePeerId]) { toast('No active connection', 'err'); return; }
+  fileList.forEach(file => sendOneFile(file));
+}
+
+const CHUNK_SIZE = 16384; // 16KB chunks
+
+function sendOneFile(file) {
+  const id = 'f' + Date.now() + Math.random().toString(36).slice(2,5);
+  const ft = ftype(file.name);
+  const fo = { id, name: file.name, size: file.size, ftype: ft, status: 'sending', progress: 0, direction: 'sent', dataUrl: null };
+
+  if (!peerFiles[activePeerId]) peerFiles[activePeerId] = [];
+  peerFiles[activePeerId].unshift(fo);
+  if (ft === 'image' && file.size < 8e6) {
+    const r = new FileReader(); r.onload = e => { fo.dataUrl = e.target.result; renderFiles(); }; r.readAsDataURL(file);
+  }
+  renderFiles();
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const arrayBuffer = e.target.result;
+    const totalChunks = Math.ceil(arrayBuffer.byteLength / CHUNK_SIZE);
+    const conn = conns[activePeerId];
+
+    conn.send({ type: 'file-meta', id, name: file.name, size: file.size, ftype: ft, totalChunks, senderAlias: myAlias });
+
+    let i = 0;
+    const pb = document.getElementById('progCard');
+    pb.style.display = 'block';
+    document.getElementById('pgName').textContent = file.name;
+    document.getElementById('pgSub').textContent = 'Sending to ' + getPeerAlias(activePeerId) + '…';
+
+    function sendChunk() {
+      if (i >= totalChunks) {
+        fo.status = 'sent'; fo.progress = 100;
+        pb.style.display = 'none';
+        renderFiles();
+        toast('✓ Sent: ' + file.name, 'ok');
+        return;
+      }
+      const slice = arrayBuffer.slice(i * CHUNK_SIZE, (i+1) * CHUNK_SIZE);
+      const binary = Array.from(new Uint8Array(slice)).map(b => String.fromCharCode(b)).join('');
+      const b64 = btoa(binary);
+      try { conn.send({ type: 'file-chunk', id, data: b64 }); } catch(err) { return; }
+      i++;
+      fo.progress = Math.round((i / totalChunks) * 100);
+      document.getElementById('pgPct').textContent = fo.progress + '%';
+      document.getElementById('pgFill').style.width = fo.progress + '%';
+      if (activePeerId && peerFiles[activePeerId]) renderFiles();
+      setTimeout(sendChunk, 10);
+    }
+    sendChunk();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── FILES UI ──
+function renderFiles() {
+  const grid = document.getElementById('filesGrid');
+  const files = (activePeerId && peerFiles[activePeerId]) ? peerFiles[activePeerId].filter(f => !f._alias || f.name) : [];
+  if (!files.length) {
+    grid.innerHTML = '<div class="files-empty">No files yet — drop something to send</div>';
+    updateSelUI(); return;
+  }
+  grid.innerHTML = files.map(f => `
+    <div class="fc ${selected.has(f.id) ? 'sel' : ''}" onclick="toggleSel('${f.id}')">
+      <div class="fc-chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="fc-prev">
+        ${f.ftype==='image'&&f.dataUrl ? `<img src="${f.dataUrl}" alt="" loading="lazy">` : `<span>${femoji(f.ftype)}</span>`}
+        <div class="fc-pbar" style="width:${f.progress||0}%"></div>
+      </div>
+      <div class="fc-body">
+        <div class="fc-name" title="${f.name}">${f.name}</div>
+        <div class="fc-size">${fsz(f.size)}</div>
+        <div class="fc-st ${f.status==='sent'?'sent':f.status==='sending'||f.status==='receiving'?'sending':'recv'}">
+          ${f.status==='sent'?'✓ Sent':f.status==='sending'?'Sending…':f.status==='receiving'?'Receiving… '+f.progress+'%':'⬇ Received'}
+        </div>
+      </div>
+    </div>
+  `).join('');
+  updateSelUI();
+}
+
+function toggleSel(id) { if (selected.has(id)) selected.delete(id); else selected.add(id); updateSelUI(); renderFiles(); }
+function updateSelUI() {
+  const has = selected.size > 0;
+  document.getElementById('fsActNormal').style.display = has ? 'none' : 'flex';
+  document.getElementById('fsActSel').style.display = has ? 'flex' : 'none';
+  if (has) document.getElementById('selLbl').textContent = selected.size + ' selected';
+}
+function selectAll() {
+  const files = (activePeerId && peerFiles[activePeerId]) ? peerFiles[activePeerId] : [];
+  if (selected.size === files.length) selected.clear(); else files.forEach(f => selected.add(f.id));
+  renderFiles();
+}
+function removeSelected() {
+  if (!activePeerId) return;
+  peerFiles[activePeerId] = peerFiles[activePeerId].filter(f => !selected.has(f.id));
+  selected.clear(); renderFiles(); toast('Removed', 'info');
+}
+function downloadSelected() {
+  if (!activePeerId) return;
+  const files = peerFiles[activePeerId] || [];
+  let dl = 0;
+  files.filter(f => selected.has(f.id)).forEach(f => {
+    if (f.dataUrl) {
+      const a = document.createElement('a'); a.href = f.dataUrl; a.download = f.name;
+      document.body.appendChild(a); a.click(); a.remove(); dl++;
+    }
+  });
+  if (dl) toast(dl + ' file' + (dl>1?'s':'') + ' downloading', 'ok');
+  else toast('Select received files to download', 'info');
+  selected.clear(); renderFiles();
+}
+
+// ── COPY ADDRESS ──
+function copyAddr() {
+  if (!myId) { toast('Address not ready yet', 'warn'); return; }
+  const formatted = fmt(myId);
+  navigator.clipboard.writeText(formatted.replace(/\s/g,'')).catch(() => {});
+  toast('Address copied: ' + formatted, 'ok');
+}
+
+// ── INIT ──
+initPeer();
+</script>
+</body>
+</html>
