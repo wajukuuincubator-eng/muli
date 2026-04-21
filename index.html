@@ -1,632 +1,504 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileDrop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
---bg:#1c2033;--bg2:#242840;--bg3:#2d3350;--bg4:#363d5e;
---border:#333d60;--border2:#404d75;
---text:#e2e8f8;--text2:#8a97c0;--text3:#4a5578;
---blue:#4d88ff;--blue2:#3366ee;--bluebg:rgba(77,136,255,0.1);
---green:#22c97a;--greenbg:rgba(34,201,122,0.1);--greenborder:#1a9a5e;
---red:#ff4d5e;--redbg:rgba(255,77,94,0.1);--redborder:#cc2233;
---amber:#ffb020;--amberbg:rgba(255,176,32,0.1);
---ad-blue:#0f7ae5;--ad-blue2:#0d6acc;
---r:6px;--rl:10px;
+  --bg:#0d0f14;
+  --surface:#13161e;
+  --surface2:#1a1e2a;
+  --surface3:#222638;
+  --border:#242840;
+  --border2:#2e3450;
+  --text:#e8ecff;
+  --muted:#5a6490;
+  --dim:#343c62;
+  --accent:#5b7fff;
+  --accent2:#3d5fe0;
+  --green:#1ed876;
+  --greenbg:rgba(30,216,118,.08);
+  --greenbdr:rgba(30,216,118,.25);
+  --amber:#f5a623;
+  --amberbg:rgba(245,166,35,.08);
+  --ambbdr:rgba(245,166,35,.25);
+  --red:#ff4d5e;
+  --redbg:rgba(255,77,94,.08);
+  --redbdr:rgba(255,77,94,.25);
+  --r:8px;
 }
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;font-size:13px}
+.app{width:100%;max-width:480px}
 
-.app{display:flex;flex-direction:column;min-height:100vh}
+/* Header */
+.hdr{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2}
+.brand{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.version{margin-left:auto;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:2px 7px}
 
-.titlebar{background:#171a2e;display:flex;align-items:center;padding:0 14px;height:40px;border-bottom:1px solid #0f1220;flex-shrink:0}
-.tb-dots{display:flex;gap:6px;margin-right:14px}
-.tb-dot{width:11px;height:11px;border-radius:50%}
-.tb-logo{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#c8d0e8}
-.tb-logo-icon{width:22px;height:22px;background:var(--ad-blue);border-radius:5px;display:flex;align-items:center;justify-content:center}
-.tb-logo-icon svg{width:13px;height:13px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.tb-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
-.tb-dot-sm{width:7px;height:7px;border-radius:50%}
+/* My address card */
+.addr-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:16px;position:relative;overflow:hidden}
+.addr-card::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(circle,rgba(91,127,255,.12) 0%,transparent 70%);pointer-events:none}
+.addr-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.addr-num{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;letter-spacing:4px;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.addr-badge{font-size:9px;font-weight:700;background:var(--accent);color:#fff;padding:2px 7px;border-radius:4px;letter-spacing:.5px;font-family:'Syne',sans-serif}
+.addr-actions{display:flex;gap:7px}
+.addr-btn{display:flex;align-items:center;gap:5px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;font-family:'Syne',sans-serif}
+.addr-btn:hover{color:var(--text);border-color:var(--accent)}
+.addr-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
 
-.nav{background:#1a1e34;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;height:36px;gap:2px;flex-shrink:0}
-.nav-tab{padding:0 12px;height:100%;display:flex;align-items:center;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;font-weight:500}
-.nav-tab.on{color:var(--text);border-color:var(--ad-blue)}
-.nav-tab:hover:not(.on){color:var(--text2)}
+/* Peers section */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700}
+.count-badge{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 7px}
 
-.content{display:flex;flex:1}
+/* Add peer */
+.add-peer{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.add-row{display:flex;gap:8px}
+.peer-input{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:14px;color:var(--text);outline:none;transition:.2s;letter-spacing:2px}
+.peer-input:focus{border-color:var(--accent)}
+.peer-input::placeholder{color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;letter-spacing:0}
+.peer-input:disabled{opacity:.4}
+.add-btn{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:9px 16px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.add-btn:hover{background:var(--accent2)}
+.add-btn:disabled{background:var(--surface3);color:var(--muted);cursor:default}
+.add-hint{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.5}
 
-.left-panel{width:260px;background:#1a1e34;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+/* Peer list */
+.peers-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.peer-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;transition:.2s}
+.peer-card.pending{border-color:var(--ambbdr)}
+.peer-card.connected{border-color:var(--greenbdr)}
+.peer-card.incoming{border-color:var(--ambbdr);animation:glow .8s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 0 0 rgba(245,166,35,0)}to{box-shadow:0 0 10px rgba(245,166,35,.15)}}
 
-.my-addr-section{padding:18px 16px;border-bottom:1px solid var(--border)}
-.sec-label{font-size:10px;font-weight:600;letter-spacing:1.1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
-.addr-display-card{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:14px 12px}
-.addr-card-label{font-size:10px;color:var(--text3);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
-.addr-number{font-family:'Roboto Mono',monospace;font-size:22px;font-weight:500;color:var(--text);letter-spacing:2px;margin-bottom:10px}
-.addr-number span{color:var(--text3)}
-.addr-actions{display:flex;gap:6px}
-.addr-btn{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 8px;font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;text-align:center}
-.addr-btn:hover{background:var(--bg4);color:var(--text);border-color:var(--border2)}
-.addr-btn.primary{background:var(--ad-blue);border-color:var(--ad-blue);color:white}
-.addr-btn.primary:hover{background:var(--ad-blue2)}
-.alias-row{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-.alias-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
-.alias-name{font-size:12px;color:var(--text2);font-weight:500}
+.peer-top{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.peer-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:.3s}
+.peer-dot.pending{background:var(--amber);animation:pulse 1s infinite}
+.peer-dot.connected{background:var(--green)}
+.peer-dot.incoming{background:var(--amber);animation:pulse .6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.peer-addr{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;flex:1}
+.peer-label{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;flex-shrink:0}
+.peer-label.pending{background:var(--amberbg);color:var(--amber);border:1px solid var(--ambbdr)}
+.peer-label.connected{background:var(--greenbg);color:var(--green);border:1px solid var(--greenbdr)}
+.peer-label.incoming{background:var(--amberbg);color:var(--amber);border:1px solid var(--ambbdr)}
+.peer-remove{width:24px;height:24px;border-radius:5px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--dim);transition:.15s;font-size:14px}
+.peer-remove:hover{background:var(--redbg);color:var(--red)}
 
-.remote-section{padding:16px;border-bottom:1px solid var(--border);flex:1}
-.remote-input-wrap{position:relative;margin-bottom:10px}
-.remote-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;font-family:'Roboto Mono',monospace;font-size:15px;color:var(--text);outline:none;transition:.2s;letter-spacing:1.5px}
-.remote-input:focus{border-color:var(--ad-blue)}
-.remote-input::placeholder{color:var(--text3);font-family:'Inter',sans-serif;font-size:12px;letter-spacing:0}
-.connect-main-btn{width:100%;background:var(--ad-blue);color:white;border:none;border-radius:var(--r);padding:10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-bottom:6px}
-.connect-main-btn:hover{background:var(--ad-blue2)}
-.connect-main-btn:active{transform:scale(.98)}
-.connect-main-btn:disabled{background:var(--bg3);color:var(--text3);cursor:default;transform:none}
-.conn-hint{font-size:11px;color:var(--text3);text-align:center}
+.peer-accept-row{display:flex;gap:6px;padding:0 14px 12px}
+.pac-btn{flex:1;padding:8px;border-radius:6px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:.15s;border:none}
+.pac-btn.acc{background:var(--green);color:#041509}
+.pac-btn.acc:hover{background:#18c465}
+.pac-btn.den{background:var(--redbg);color:var(--red);border:1px solid var(--redbdr)}
+.pac-btn.den:hover{background:rgba(255,77,94,.18)}
 
-.recent-section{padding:14px 16px}
-.recent-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r);cursor:pointer;transition:.15s}
-.recent-item:hover{background:var(--bg3)}
-.ri-avatar{width:28px;height:28px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text2);flex-shrink:0}
-.ri-avatar.green{background:var(--greenbg);border-color:var(--greenborder);color:var(--green)}
-.ri-info{flex:1;min-width:0}
-.ri-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ri-addr{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--text3)}
-.ri-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+/* Transfer area */
+.transfer-area{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:14px;margin-bottom:16px}
+.ta-select-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ta-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;flex-shrink:0}
+.ta-select{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--text);outline:none;cursor:pointer}
+.ta-select:focus{border-color:var(--accent)}
+.ta-select option{background:var(--surface2)}
 
-.right-panel{flex:1;display:flex;flex-direction:column;background:var(--bg)}
-
-.idle-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;gap:0}
-.idle-icon{width:72px;height:72px;background:var(--bg2);border:1px solid var(--border2);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
-.idle-icon svg{width:32px;height:32px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.idle-title{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:6px}
-.idle-sub{font-size:12px;color:var(--text3);max-width:260px;line-height:1.6}
-.idle-steps{margin-top:22px;display:flex;flex-direction:column;gap:8px;text-align:left;max-width:260px}
-.step-row{display:flex;align-items:flex-start;gap:10px}
-.step-num{width:20px;height:20px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text3);flex-shrink:0;margin-top:1px}
-.step-txt{font-size:12px;color:var(--text3);line-height:1.5}
-
-.incoming-overlay{background:var(--bg2);border-bottom:1px solid var(--amber);padding:16px 20px;display:none}
-.io-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.io-ring{width:42px;height:42px;border-radius:10px;background:var(--amberbg);border:1px solid var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:ring .8s infinite}
-@keyframes ring{0%,100%{border-color:var(--amber)}50%{border-color:transparent}}
-.io-ring svg{width:20px;height:20px;stroke:var(--amber);fill:none;stroke-width:1.5}
-.io-who{flex:1}
-.io-title{font-size:13px;font-weight:600;color:var(--amber);margin-bottom:2px}
-.io-from{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text2)}
-.io-from-name{font-size:11px;color:var(--text3);margin-top:1px}
-.io-btns{display:flex;gap:8px}
-.io-btn{flex:1;padding:9px;border-radius:var(--r);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;border:1px solid transparent}
-.io-btn.accept{background:var(--green);color:#0a1a12;border-color:var(--green)}
-.io-btn.accept:hover{background:#1aaa66}
-.io-btn.deny{background:var(--redbg);color:var(--red);border-color:var(--redborder)}
-.io-btn.deny:hover{background:rgba(255,77,94,.2)}
-
-.session-panel{flex:1;display:flex;flex-direction:column;display:none}
-.session-header{background:#1a1e34;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:14px}
-.sh-avatar{width:38px;height:38px;border-radius:9px;background:var(--bluebg);border:1px solid var(--ad-blue);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--ad-blue)}
-.sh-name{font-size:14px;font-weight:600}
-.sh-addr{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2);margin-top:2px}
-.sh-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.live-pill{display:flex;align-items:center;gap:5px;background:var(--greenbg);border:1px solid var(--greenborder);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green)}
-.live-pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-.disc-btn{background:var(--redbg);color:var(--red);border:1px solid var(--redborder);border-radius:var(--r);padding:5px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:.15s}
-.disc-btn:hover{background:rgba(255,77,94,.25)}
-
-.dropzone{margin:16px;border:2px dashed var(--border2);border-radius:var(--rl);padding:22px;text-align:center;cursor:pointer;transition:.25s;background:var(--bg2);flex-shrink:0}
-.dropzone:hover,.dropzone.dg{border-color:var(--ad-blue);background:var(--bluebg)}
-.dz-row{display:flex;align-items:center;justify-content:center;gap:10px}
-.dz-row svg{width:20px;height:20px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round}
-.dropzone:hover .dz-row svg,.dropzone.dg .dz-row svg{stroke:var(--ad-blue)}
-.dz-txt{font-size:13px;font-weight:500;color:var(--text2)}
-.dz-sub{font-size:11px;color:var(--text3);margin-top:4px}
-.dz-types{display:flex;gap:5px;justify-content:center;margin-top:8px;flex-wrap:wrap}
-.dz-type{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--border2);color:var(--text3);font-weight:500}
+.dropzone{border:2px dashed var(--border2);border-radius:var(--r);padding:22px;text-align:center;cursor:pointer;transition:.2s}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:rgba(91,127,255,.05)}
+.dz-icon{width:36px;height:36px;margin:0 auto 8px;border-radius:9px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center}
+.dz-icon svg{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:1.5}
+.dz-txt{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:3px}
+.dz-sub{font-size:10px;color:var(--dim)}
 input[type=file]{display:none}
 
-.pb-wrap{margin:0 16px 10px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:11px 14px;display:none}
-.pb-top{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px}
-.pb-name{font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pb-pct{font-family:'Roboto Mono',monospace;color:var(--ad-blue)}
-.pb-track{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
-.pb-fill{height:100%;background:var(--ad-blue);transition:width .2s}
-.pb-sub{font-size:10px;color:var(--text3);margin-top:5px}
+/* Progress */
+.pb{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:none;margin-top:10px}
+.pb-top{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px}
+.pb-name{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.pb-pct{font-family:'DM Mono',monospace;color:var(--accent)}
+.pb-track{height:2px;background:var(--border2);border-radius:2px;overflow:hidden}
+.pb-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .15s}
 
-.toolbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px;flex-shrink:0}
-.ftabs{display:flex;gap:2px}
-.ftab{padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;color:var(--text3);transition:.15s;border:none;background:none;font-family:'Inter',sans-serif;font-weight:500}
-.ftab.on{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
-.tb-actions{display:flex;gap:6px;align-items:center}
-.t-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:5px 10px;font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:4px}
-.t-btn:hover{border-color:var(--border2);color:var(--text)}
-.t-btn.prim{background:var(--ad-blue);border-color:var(--ad-blue);color:white}
-.t-btn.prim:hover{background:var(--ad-blue2)}
-.t-btn.danger{color:var(--red)}
-.t-btn.danger:hover{background:var(--redbg);border-color:var(--redborder)}
-.sel-label{font-size:11px;color:var(--ad-blue);font-weight:500}
+/* Shared files */
+.files-section{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:14px}
+.files-title{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.files-count{font-family:'DM Mono',monospace;font-size:10px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;color:var(--muted)}
+.files-list{display:flex;flex-direction:column;gap:6px}
+.file-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 10px;transition:.15s}
+.file-row:hover{border-color:var(--border2)}
+.file-icon{width:32px;height:32px;border-radius:7px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;position:relative;overflow:hidden}
+.file-icon img{width:100%;height:100%;object-fit:cover;border-radius:7px}
+.file-pbar{position:absolute;bottom:0;left:0;height:2px;background:var(--accent);transition:width .15s}
+.file-meta{flex:1;min-width:0}
+.file-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.file-info{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.file-dir{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0}
+.file-dir.sent{background:var(--greenbg);color:var(--green);border:1px solid var(--greenbdr)}
+.file-dir.sending{background:rgba(91,127,255,.1);color:var(--accent);border:1px solid rgba(91,127,255,.25)}
+.file-dir.received{background:var(--amberbg);color:var(--amber);border:1px solid var(--ambbdr)}
+.dl-btn{width:28px;height:28px;border-radius:6px;background:var(--surface3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s;flex-shrink:0}
+.dl-btn:hover{background:var(--greenbg);border-color:var(--greenbdr)}
+.dl-btn svg{width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:2;transition:.15s}
+.dl-btn:hover svg{stroke:var(--green)}
+.files-empty{font-size:11px;color:var(--dim);text-align:center;padding:16px;font-style:italic}
 
-.file-area{flex:1;overflow-y:auto;padding:0 16px 16px}
-.file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-.fc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:.2s;position:relative}
-.fc:hover{border-color:var(--border2)}
-.fc.sel{border-color:var(--ad-blue);background:var(--bluebg)}
-.fc-chk{position:absolute;top:6px;right:6px;width:17px;height:17px;border-radius:50%;background:var(--ad-blue);display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.4);transition:.15s;z-index:2}
-.fc.sel .fc-chk{opacity:1;transform:scale(1)}
-.fc-chk svg{width:9px;height:9px;stroke:white;fill:none;stroke-width:2.5}
-.fc-prev{height:84px;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.fc-prev img{width:100%;height:100%;object-fit:cover}
-.fc-prev .ftype-icon{font-size:26px}
-.fc-pbar{position:absolute;bottom:0;left:0;height:2px;background:var(--ad-blue);transition:width .2s}
-.fc-body{padding:8px}
-.fc-name{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
-.fc-meta{font-size:10px;color:var(--text3)}
-.fc-st{font-size:9px;font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
-.fc-st.sent{color:var(--green)}
-.fc-st.sending{color:var(--ad-blue)}
-.fc-st.recv{color:var(--amber)}
-
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;color:var(--text3);gap:6px}
-.empty svg{width:24px;height:24px;stroke:var(--text3);fill:none;stroke-width:1.5}
-.empty p{font-size:12px}
-
-.toast{position:absolute;bottom:20px;right:20px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;font-size:12px;z-index:99;transform:translateY(20px);opacity:0;transition:.25s;pointer-events:none;max-width:240px}
-.toast.show{transform:translateY(0);opacity:1}
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:9px 16px;font-size:12px;font-weight:600;z-index:999;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.ok{border-left:3px solid var(--green)}
 .toast.err{border-left:3px solid var(--red)}
-.toast.info{border-left:3px solid var(--ad-blue)}
+.toast.info{border-left:3px solid var(--accent)}
 .toast.warn{border-left:3px solid var(--amber)}
 
-.modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s;min-height:300px}
-.modal-bg.open{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:20px;width:340px;max-width:92vw}
-.modal-hd{display:flex;align-items:center;margin-bottom:14px}
-.modal-title{font-size:14px;font-weight:600}
-.modal-x{margin-left:auto;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 4px;font-family:'Inter',sans-serif;line-height:1}
-.modal-x:hover{color:var(--text)}
-.modal-foot{display:flex;gap:7px;justify-content:flex-end;margin-top:14px}
-
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
-
-.wrap{position:relative;overflow:hidden}
+.empty-state{text-align:center;padding:16px;color:var(--dim);font-size:11px;font-style:italic}
 </style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+    </div>
+    <div class="brand">FileDrop</div>
+    <div class="version">v2.0</div>
+  </div>
 
-<div class="wrap app">
+  <!-- My address -->
+  <div class="addr-card">
+    <div class="addr-lbl">Your address — share this with others</div>
+    <div class="addr-num">
+      <span id="myAddr">— — —</span>
+      <span class="addr-badge">MY DEVICE</span>
+    </div>
+    <div class="addr-actions">
+      <div class="addr-btn" onclick="copyMyAddr()">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy address
+      </div>
+    </div>
+  </div>
+
+  <!-- Peers -->
+  <div class="section-hdr">
+    <div class="section-title">Connected devices</div>
+    <div class="count-badge" id="peerCount">0 / 10</div>
+  </div>
+
+  <div class="add-peer">
+    <div class="add-row">
+      <input class="peer-input" id="peerInput" type="text" placeholder="Enter address (e.g. 123 456 789)" maxlength="11" oninput="fmtInput(this)">
+      <button class="add-btn" id="addBtn" onclick="addPeer()">Connect</button>
+    </div>
+    <div class="add-hint">Enter another device's address to request a connection. Up to 10 devices.</div>
+  </div>
+
+  <div class="peers-list" id="peersList">
+    <div class="empty-state">No devices connected yet. Enter an address above to start.</div>
+  </div>
+
+  <!-- Transfer -->
+  <div class="transfer-area" id="transferArea" style="display:none">
+    <div class="ta-select-row">
+      <div class="ta-lbl">Send to</div>
+      <select class="ta-select" id="targetSelect"></select>
+    </div>
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
+      <div class="dz-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+      <div class="dz-txt">Drop files or click to browse</div>
+      <div class="dz-sub">Any file type — images, PDFs, videos, documents</div>
+    </div>
+    <input type="file" id="fileInput" multiple onchange="onFilePick(event)">
+    <div class="pb" id="pb">
+      <div class="pb-top"><span class="pb-name" id="pbName">—</span><span class="pb-pct" id="pbPct">0%</span></div>
+      <div class="pb-track"><div class="pb-fill" id="pbFill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Files -->
+  <div class="files-section" id="filesSection" style="display:none">
+    <div class="files-title">
+      Shared files
+      <span class="files-count" id="filesCount">0</span>
+    </div>
+    <div class="files-list" id="filesList"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<div class="titlebar">
-  <div class="tb-dots">
-    <div class="tb-dot" style="background:#ff5f57"></div>
-    <div class="tb-dot" style="background:#febc2e"></div>
-    <div class="tb-dot" style="background:#28c840"></div>
-  </div>
-  <div class="tb-logo">
-    <div class="tb-logo-icon">
-      <svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="3"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2"/></svg>
-    </div>
-    FileDrop
-  </div>
-  <div class="tb-right">
-    <div class="tb-status">
-      <div class="tb-dot-sm" id="tbStatusDot" style="background:#4a5578"></div>
-      <span id="tbStatusTxt">Not connected</span>
-    </div>
-  </div>
-</div>
-
-<div class="nav">
-  <div class="nav-tab on">Remote</div>
-  <div class="nav-tab">Transfers</div>
-  <div class="nav-tab">History</div>
-</div>
-
-<div class="content">
-  <div class="left-panel">
-    <div class="my-addr-section">
-      <div class="sec-label">This device</div>
-      <div class="addr-display-card">
-        <div class="addr-card-label">Your address</div>
-        <div class="addr-number" id="myAddrNum">— — —</div>
-        <div class="addr-actions">
-          <button class="addr-btn" onclick="copyAddr()">Copy</button>
-          <button class="addr-btn primary" onclick="copyAddr()">Share</button>
-        </div>
-        <div class="alias-row">
-          <div class="alias-dot"></div>
-          <div class="alias-name" id="myAlias">Ready</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="remote-section">
-      <div class="sec-label">Connect to remote</div>
-      <input class="remote-input" type="text" id="remoteInput" placeholder="Enter address  e.g. 123 456 789" maxlength="11" oninput="fmtInput(this)" />
-      <button class="connect-main-btn" id="connectBtn" onclick="sendReq()">Connect</button>
-      <div class="conn-hint" id="connHint">Enter the address shown on the other device</div>
-    </div>
-
-    <div class="recent-section" id="recentSection">
-      <div class="sec-label">Recent</div>
-      <div id="recentList"></div>
-    </div>
-  </div>
-
-  <div class="right-panel" id="rightPanel">
-
-    <div class="idle-screen" id="idleScreen">
-      <div class="idle-icon">
-        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      </div>
-      <div class="idle-title">Ready to connect</div>
-      <div class="idle-sub">Share your address with another device to start transferring files.</div>
-      <div class="idle-steps">
-        <div class="step-row"><div class="step-num">1</div><div class="step-txt">Copy your address and share it</div></div>
-        <div class="step-row"><div class="step-num">2</div><div class="step-txt">The other device enters it and clicks Connect</div></div>
-        <div class="step-row"><div class="step-num">3</div><div class="step-txt">Accept the request to start sharing files</div></div>
-      </div>
-    </div>
-
-    <div class="incoming-overlay" id="incomingOverlay">
-      <div class="io-top">
-        <div class="io-ring">
-          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.8 19.8 0 0 1 1.62 3.38 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.91.34 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        </div>
-        <div class="io-who">
-          <div class="io-title">Incoming connection request</div>
-          <div class="io-from" id="ioFromAddr">From: —</div>
-          <div class="io-from-name" id="ioFromName"></div>
-        </div>
-      </div>
-      <div class="io-btns">
-        <button class="io-btn accept" onclick="acceptConn()">Accept</button>
-        <button class="io-btn deny" onclick="denyConn()">Deny</button>
-      </div>
-    </div>
-
-    <div class="session-panel" id="sessionPanel">
-      <div class="session-header">
-        <div class="sh-avatar" id="shAvatar">?</div>
-        <div>
-          <div class="sh-name" id="shName">—</div>
-          <div class="sh-addr" id="shAddr">—</div>
-        </div>
-        <div class="sh-right">
-          <div class="live-pill"><div class="live-pulse"></div>Connected</div>
-          <button class="disc-btn" onclick="disconnect()">Disconnect</button>
-        </div>
-      </div>
-
-      <div class="dropzone" id="dz" onclick="document.getElementById('fi').click()" ondragover="onDO(event)" ondragleave="onDL()" ondrop="onDD(event)">
-        <div class="dz-row">
-          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <div class="dz-txt">Drop files here to send</div>
-        </div>
-        <div class="dz-sub">or click to browse — images, PDFs, videos, any file</div>
-        <div class="dz-types">
-          <span class="dz-type">Images</span><span class="dz-type">PDFs</span><span class="dz-type">Videos</span><span class="dz-type">Documents</span>
-        </div>
-      </div>
-      <input type="file" id="fi" multiple onchange="onFS(event)">
-
-      <div class="pb-wrap" id="pbWrap">
-        <div class="pb-top"><span class="pb-name" id="pbName">—</span><span class="pb-pct" id="pbPct">0%</span></div>
-        <div class="pb-track"><div class="pb-fill" id="pbFill" style="width:0%"></div></div>
-        <div class="pb-sub" id="pbSub">Preparing…</div>
-      </div>
-
-      <div class="toolbar">
-        <div class="ftabs" id="ftabs">
-          <button class="ftab on" onclick="setF('all',this)">All</button>
-          <button class="ftab" onclick="setF('image',this)">Images</button>
-          <button class="ftab" onclick="setF('video',this)">Videos</button>
-          <button class="ftab" onclick="setF('pdf',this)">PDFs</button>
-          <button class="ftab" onclick="setF('other',this)">Other</button>
-        </div>
-        <div class="tb-actions" id="tbAct">
-          <button class="t-btn" onclick="markAll()">Select all</button>
-        </div>
-        <div class="tb-actions" id="tbSel" style="display:none">
-          <span class="sel-label" id="selLbl">0</span>
-          <button class="t-btn prim" onclick="dlSel()">
-            <svg width="11" height="11" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download
-          </button>
-          <button class="t-btn danger" onclick="rmSel()">Remove</button>
-        </div>
-      </div>
-
-      <div class="file-area">
-        <div class="file-grid" id="fileGrid"></div>
-        <div class="empty" id="emptyState">
-          <svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-          <p>No files yet — drop something to send</p>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<div class="modal-bg" id="pvModal">
-  <div class="modal">
-    <div class="modal-hd">
-      <div class="modal-title" id="pvTitle">File info</div>
-      <button class="modal-x" onclick="closeM()">×</button>
-    </div>
-    <div id="pvContent" style="text-align:center;min-height:80px;display:flex;align-items:center;justify-content:center"></div>
-    <div class="modal-foot">
-      <button class="t-btn prim" onclick="dlPv()">Download</button>
-      <button class="t-btn" onclick="closeM()">Close</button>
-    </div>
-  </div>
-</div>
-</div>
-
 <script>
-const SK='fd_v3';
-let myAddr='',peer=null,files=[],sel=new Set(),filter='all',pvFile=null,stk=null,pendingReq=null;
-const names=['This PC','My Laptop','Home Mac','Work Desktop','Studio PC','Dev Machine'];
+const SK = 'fd_v4';
+let myAddr = '';
+let peers = []; // {id, addr, status:'pending'|'connected'|'incoming'}
+let sharedFiles = []; // {id, name, size, type, progress, status:'sending'|'sent'|'received', from, to, dataUrl}
+let sendQueue = null;
 
-function rndN(n){let s='';for(let i=0;i<n;i++)s+=Math.floor(Math.random()*10);return s;}
-function fmtAddr(raw){const d=raw.replace(/\D/g,'').slice(0,9);return d.replace(/(\d{3})(\d{1,3})?(\d{1,3})?/,(_,a,b,c)=>[a,b,c].filter(Boolean).join(' '));}
-function genAddr(){return rndN(3)+' '+rndN(3)+' '+rndN(3);}
-function fmtInput(el){const raw=el.value.replace(/\D/g,'').slice(0,9);el.value=fmtAddr(raw);}
-function fsz(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';if(b<1073741824)return(b/1048576).toFixed(1)+'MB';return(b/1073741824).toFixed(2)+'GB';}
-function ftype(n){const e=(n.split('.').pop()||'').toLowerCase();if(['jpg','jpeg','png','gif','webp','svg','bmp'].includes(e))return'image';if(['mp4','mov','avi','mkv','webm'].includes(e))return'video';if(e==='pdf')return'pdf';return'other';}
-function femoji(t){return{image:'🖼',video:'🎬',pdf:'📄',other:'📦'}[t]||'📦';}
-
-function load(){
-  try{
-    const d=JSON.parse(localStorage.getItem(SK)||'{}');
-    myAddr=d.addr||genAddr();
-    files=d.files||[];
-  }catch(e){myAddr=genAddr();}
+// --- Init ---
+function init(){
+  try {
+    const d = JSON.parse(localStorage.getItem(SK) || '{}');
+    myAddr = d.addr || fmt(rnd9());
+  } catch(e){ myAddr = fmt(rnd9()); }
+  document.getElementById('myAddr').textContent = myAddr;
   save();
-  document.getElementById('myAddrNum').textContent=myAddr;
-  document.getElementById('myAlias').textContent=names[Math.floor(Math.random()*names.length)];
-  renderRecent();
+  render();
 }
-function save(){try{localStorage.setItem(SK,JSON.stringify({addr:myAddr,files}));}catch(e){}}
 
-function copyAddr(){
+function save(){ try{ localStorage.setItem(SK, JSON.stringify({addr:myAddr})); }catch(e){} }
+
+// --- Utils ---
+function rnd9(){ let s=''; for(let i=0;i<9;i++) s+=Math.floor(Math.random()*10); return s; }
+function fmt(raw){ const d=raw.replace(/\D/g,'').slice(0,9); const m=d.match(/(\d{1,3})(\d{1,3})?(\d{1,3})?/); if(!m)return d; return [m[1],m[2],m[3]].filter(Boolean).join(' '); }
+function fmtInput(el){ el.value = fmt(el.value); }
+function fsz(b){ if(b<1024)return b+'B'; if(b<1048576)return(b/1024).toFixed(1)+'KB'; return(b/1048576).toFixed(1)+'MB'; }
+function ftype(n){ const e=(n.split('.').pop()||'').toLowerCase(); if(['jpg','jpeg','png','gif','webp','svg'].includes(e))return'image'; if(['mp4','mov','avi','mkv'].includes(e))return'video'; if(e==='pdf')return'pdf'; return'other'; }
+function femoji(t){ return{image:'🖼',video:'🎬',pdf:'📄',other:'📦'}[t]||'📦'; }
+
+function toast(msg, type='info'){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast '+type+' show';
+  setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// --- Address ---
+function copyMyAddr(){
   navigator.clipboard.writeText(myAddr.replace(/\s/g,'')).catch(()=>{});
-  toast('Address copied to clipboard','ok');
+  toast('Address copied!','ok');
 }
 
-function toast(msg,type='info'){
-  const el=document.getElementById('toast');
-  el.textContent=msg;el.className='toast '+type+' show';
-  setTimeout(()=>el.classList.remove('show'),3000);
-}
+// --- Peers ---
+function addPeer(){
+  const raw = document.getElementById('peerInput').value.replace(/\D/g,'');
+  if(raw.length < 6){ toast('Enter a valid address','err'); return; }
+  const addr = fmt(raw);
+  if(addr === myAddr){ toast("That's your own address!",'err'); return; }
+  if(peers.length >= 10){ toast('Maximum 10 devices reached','err'); return; }
+  if(peers.find(p=>p.addr===addr)){ toast('Already added','warn'); return; }
 
-function setStatus(state){
-  const dot=document.getElementById('tbStatusDot');
-  const txt=document.getElementById('tbStatusTxt');
-  if(state==='connected'){dot.style.background='#22c97a';txt.textContent='Connected';}
-  else if(state==='waiting'){dot.style.background='#ffb020';txt.textContent='Waiting…';}
-  else{dot.style.background='#4a5578';txt.textContent='Not connected';}
-}
+  const id = 'p' + Date.now();
+  peers.push({id, addr, status:'pending'});
+  document.getElementById('peerInput').value = '';
+  render();
+  toast('Connection request sent…','info');
 
-function sendReq(){
-  const val=document.getElementById('remoteInput').value.trim();
-  const digits=val.replace(/\D/g,'');
-  if(digits.length<6){toast('Enter a valid 9-digit address','err');return;}
-  const formatted=fmtAddr(digits);
-  if(formatted===myAddr){toast("That's your own address!","err");return;}
-
-  const btn=document.getElementById('connectBtn');
-  btn.textContent='Waiting for response…';btn.disabled=true;
-  document.getElementById('connHint').textContent='Waiting for the other device to accept…';
-  setStatus('waiting');
-  toast('Request sent to '+formatted,'info');
-
+  // Simulate the other side receiving the request after a short delay
   setTimeout(()=>{
-    pendingReq={addr:formatted,name:'Remote '+formatted.slice(0,3)};
-    showIncoming(pendingReq.addr,pendingReq.name);
-  },1400);
+    const p = peers.find(x=>x.id===id);
+    if(p && p.status==='pending'){
+      // In a real app this is handled server-side.
+      // For demo: auto-show "incoming" from their perspective on same machine
+      // We'll just auto-accept after 1.5s to demo the flow
+      simulateAccept(id);
+    }
+  }, 1500);
 }
 
-function showIncoming(fromAddr,fromName){
-  document.getElementById('ioFromAddr').textContent=fromAddr;
-  document.getElementById('ioFromName').textContent=fromName;
-  document.getElementById('incomingOverlay').style.display='block';
-  document.getElementById('idleScreen').style.display='flex';
+function simulateAccept(id){
+  const p = peers.find(x=>x.id===id);
+  if(!p) return;
+  p.status = 'connected';
+  render();
+  toast('Device ' + p.addr + ' accepted','ok');
 }
 
-function acceptConn(){
-  const req=pendingReq||{addr:document.getElementById('ioFromAddr').textContent,name:'Remote Device'};
-  document.getElementById('incomingOverlay').style.display='none';
-  pendingReq=null;
-  goConnected(req.addr,req.name);
-}
-
-function denyConn(){
-  document.getElementById('incomingOverlay').style.display='none';
-  pendingReq=null;
-  resetConnUI();
-  toast('Connection denied','warn');
-}
-
-function goConnected(addr,name){
-  peer={addr,name};
-  document.getElementById('idleScreen').style.display='none';
-  document.getElementById('sessionPanel').style.display='flex';
-  document.getElementById('sessionPanel').style.flexDirection='column';
-  document.getElementById('shAvatar').textContent=name.charAt(0).toUpperCase();
-  document.getElementById('shName').textContent=name;
-  document.getElementById('shAddr').textContent=addr;
-  document.getElementById('connectBtn').textContent='Connect';
-  document.getElementById('connectBtn').disabled=false;
-  document.getElementById('connHint').textContent='Connected — session active';
-  document.getElementById('remoteInput').value='';
-  setStatus('connected');
-  renderFiles();
-  addRecent(addr,name);
-  toast('Connected to '+name,'ok');
-  save();
-}
-
-function disconnect(){
-  peer=null;files=[];sel.clear();
-  document.getElementById('sessionPanel').style.display='none';
-  document.getElementById('idleScreen').style.display='flex';
-  resetConnUI();
-  setStatus('');
-  renderFiles();
-  save();
+function removePeer(id){
+  sharedFiles = sharedFiles.filter(f => f.peerId !== id);
+  peers = peers.filter(p => p.id !== id);
+  render();
   toast('Disconnected','info');
 }
 
-function resetConnUI(){
-  document.getElementById('connectBtn').textContent='Connect';
-  document.getElementById('connectBtn').disabled=false;
-  document.getElementById('connHint').textContent='Enter the address shown on the other device';
-  setStatus('');
+function acceptIncoming(id){
+  const p = peers.find(x=>x.id===id);
+  if(!p) return;
+  p.status = 'connected';
+  render();
+  toast('Connected to ' + p.addr,'ok');
 }
 
-function addRecent(addr,name){
-  try{
-    let r=JSON.parse(localStorage.getItem('fd_recent')||'[]');
-    r=r.filter(x=>x.addr!==addr);
-    r.unshift({addr,name,ts:Date.now()});
-    r=r.slice(0,5);
-    localStorage.setItem('fd_recent',JSON.stringify(r));
-    renderRecent();
-  }catch(e){}
+function denyIncoming(id){
+  peers = peers.filter(p => p.id !== id);
+  render();
+  toast('Request declined','warn');
 }
 
-function renderRecent(){
-  try{
-    const r=JSON.parse(localStorage.getItem('fd_recent')||'[]');
-    const el=document.getElementById('recentList');
-    if(!r.length){el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:4px 2px">No recent connections</div>';return;}
-    el.innerHTML=r.map(x=>`
-      <div class="recent-item" onclick="quickConnect('${x.addr}','${x.name}')">
-        <div class="ri-avatar green">${x.name.charAt(0).toUpperCase()}</div>
-        <div class="ri-info">
-          <div class="ri-name">${x.name}</div>
-          <div class="ri-addr">${x.addr}</div>
-        </div>
-        <div class="ri-dot" style="background:var(--text3)"></div>
-      </div>
-    `).join('');
-  }catch(e){}
+// --- Files ---
+function onDragOver(e){ e.preventDefault(); document.getElementById('dropzone').classList.add('drag'); }
+function onDragLeave(){ document.getElementById('dropzone').classList.remove('drag'); }
+function onDrop(e){ e.preventDefault(); onDragLeave(); sendFiles(e.dataTransfer.files); }
+function onFilePick(e){ sendFiles(e.target.files); e.target.value=''; }
+
+function getTarget(){
+  const sel = document.getElementById('targetSelect');
+  return sel.value;
 }
 
-function quickConnect(addr,name){
-  document.getElementById('remoteInput').value=addr;
-  sendReq();
-}
+function sendFiles(rawList){
+  const targetId = getTarget();
+  if(!targetId){ toast('Select a device to send to','err'); return; }
+  const peer = peers.find(p=>p.id===targetId && p.status==='connected');
+  if(!peer){ toast('Device not connected','err'); return; }
+  if(sendQueue){ toast('Already sending, please wait','warn'); return; }
 
-function onDO(e){e.preventDefault();document.getElementById('dz').classList.add('dg');}
-function onDL(){document.getElementById('dz').classList.remove('dg');}
-function onDD(e){e.preventDefault();onDL();if(!peer)return;doFiles([...e.dataTransfer.files]);}
-function onFS(e){if(!peer)return;doFiles([...e.target.files]);e.target.value='';}
-
-function doFiles(list){
-  if(!peer){toast('Not connected','err');return;}
+  const list = [...rawList];
   list.forEach(f=>{
-    const id='f'+Date.now()+Math.random().toString(36).slice(2,5);
-    const t=ftype(f.name);
-    const fo={id,name:f.name,size:f.size,type:t,status:'sending',progress:0,direction:'sent',device:peer.name,ts:Date.now(),dataUrl:null};
-    if(t==='image'&&f.size<6e6){
-      const r=new FileReader();r.onload=ev=>{fo.dataUrl=ev.target.result;renderFiles();save();};r.readAsDataURL(f);
+    const id = 'f'+Date.now()+Math.random().toString(36).slice(2,5);
+    const t = ftype(f.name);
+    const fo = {id, name:f.name, size:f.size, type:t, progress:0, status:'sending', peerId:targetId, peerAddr:peer.addr, direction:'sent', dataUrl:null, raw:f};
+    if(t==='image' && f.size<8e6){
+      const r=new FileReader(); r.onload=ev=>{fo.dataUrl=ev.target.result;renderFiles();}; r.readAsDataURL(f);
     }
-    files.unshift(fo);
+    sharedFiles.unshift(fo);
   });
   renderFiles();
-  animSend(list);
+  animateSend(list, targetId, peer);
 }
 
-function animSend(list){
-  if(stk)return;
-  document.getElementById('pbWrap').style.display='block';
-  let fi=0,pr=0;
-  function nxt(){
-    if(fi>=list.length){
-      document.getElementById('pbWrap').style.display='none';
-      files.filter(f=>f.status==='sending').forEach(f=>{f.status='sent';f.progress=100;});
-      renderFiles();save();
-      toast(list.length+' file'+(list.length>1?'s':'')+' sent','ok');
-      clearInterval(stk);stk=null;return;
+function animateSend(list, targetId, peer){
+  let fi=0, pr=0;
+  const pb = document.getElementById('pb');
+  pb.style.display = 'block';
+
+  function next(){
+    if(fi >= list.length){
+      pb.style.display='none';
+      sharedFiles.filter(f=>f.status==='sending'&&f.peerId===targetId).forEach(f=>{f.status='sent';f.progress=100;});
+      renderFiles();
+      sendQueue = null;
+      // Simulate receive on the other device (same session demo)
+      simulateReceive(list, targetId, peer);
+      toast(list.length + ' file'+(list.length>1?'s':'')+' sent!','ok');
+      return;
     }
-    const f=list[fi];pr=0;
-    document.getElementById('pbName').textContent=f.name;
-    document.getElementById('pbSub').textContent='Sending to '+peer.name+'…';
-    const step=Math.max(12,Math.min(65,Math.floor(f.size/200000)));
-    stk=setInterval(()=>{
-      pr+=step+Math.random()*8;
-      if(pr>=100){pr=100;clearInterval(stk);stk=null;fi++;setTimeout(nxt,220);}
-      document.getElementById('pbPct').textContent=Math.floor(pr)+'%';
-      document.getElementById('pbFill').style.width=pr+'%';
-      const fo=files.find(x=>x.name===f.name&&x.status==='sending');
-      if(fo){fo.progress=Math.floor(pr);updCard(fo);}
-    },65);
+    const f = list[fi]; pr=0;
+    document.getElementById('pbName').textContent = f.name;
+    const speed = Math.max(10, Math.min(55, Math.floor(f.size/200000)));
+    sendQueue = setInterval(()=>{
+      pr += speed + Math.random()*6;
+      if(pr >= 100){
+        pr=100; clearInterval(sendQueue); sendQueue=null; fi++; setTimeout(next,150);
+      }
+      document.getElementById('pbPct').textContent = Math.floor(pr)+'%';
+      document.getElementById('pbFill').style.width = pr+'%';
+      const fo = sharedFiles.find(x=>x.name===f.name&&x.status==='sending'&&x.peerId===targetId);
+      if(fo){fo.progress=Math.floor(pr);renderFiles();}
+    },60);
   }
-  nxt();
+  next();
 }
 
-function updCard(fo){
-  const el=document.getElementById('fc_'+fo.id);if(!el)return;
-  const b=el.querySelector('.fc-pbar');if(b)b.style.width=fo.progress+'%';
-  const s=el.querySelector('.fc-st');
-  if(s){s.className='fc-st '+(fo.status==='sent'?'sent':fo.status==='sending'?'sending':'recv');s.textContent=fo.status==='sent'?'Sent':fo.status==='sending'?'Sending…':'Received';}
+function simulateReceive(list, fromPeerId, fromPeer){
+  // In this demo both "sides" are same page — show as received files labeled from that peer
+  list.forEach(f=>{
+    const id='r'+Date.now()+Math.random().toString(36).slice(2,5);
+    const t=ftype(f.name);
+    const fo={id,name:f.name,size:f.size,type:t,progress:100,status:'received',peerId:fromPeerId,peerAddr:fromPeer.addr,direction:'received',dataUrl:null,raw:f};
+    if(t==='image'&&f.size<8e6){const r=new FileReader();r.onload=ev=>{fo.dataUrl=ev.target.result;renderFiles();};r.readAsDataURL(f);}
+    sharedFiles.unshift(fo);
+  });
+  renderFiles();
 }
 
-function setF(f,el){filter=f;sel.clear();document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderFiles();}
+function downloadFile(id){
+  const fo = sharedFiles.find(f=>f.id===id);
+  if(!fo || !fo.raw){ toast('File not available for download','err'); return; }
+  const url = URL.createObjectURL(fo.raw);
+  const a = document.createElement('a');
+  a.href = url; a.download = fo.name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },100);
+  toast('Downloading ' + fo.name,'ok');
+}
 
-function filteredFiles(){return files.filter(f=>{if(filter==='all')return true;if(filter==='other')return!['image','video','pdf'].includes(f.type);return f.type===filter;});}
+// --- Render ---
+function render(){
+  renderPeers();
+  renderFiles();
+  renderTransferArea();
+  document.getElementById('peerCount').textContent = peers.length + ' / 10';
+  if(peers.length >= 10) document.getElementById('addBtn').disabled = true;
+  else document.getElementById('addBtn').disabled = false;
+}
 
-function renderFiles(){
-  const g=document.getElementById('fileGrid'),e=document.getElementById('emptyState'),list=filteredFiles();
-  if(!list.length){g.innerHTML='';e.style.display='flex';return;}
-  e.style.display='none';
-  g.innerHTML=list.map(f=>`
-    <div class="fc ${sel.has(f.id)?'sel':''}" id="fc_${f.id}" onclick="toggleSel('${f.id}')" ondblclick="openPv('${f.id}')">
-      <div class="fc-chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div class="fc-prev">${f.type==='image'&&f.dataUrl?`<img src="${f.dataUrl}" alt="" loading="lazy">`:`<span class="ftype-icon">${femoji(f.type)}</span>`}<div class="fc-pbar" style="width:${f.progress||0}%"></div></div>
-      <div class="fc-body">
-        <div class="fc-name" title="${f.name}">${f.name}</div>
-        <div class="fc-meta">${fsz(f.size)}</div>
-        <div class="fc-st ${f.status==='sent'?'sent':f.status==='sending'?'sending':'recv'}">${f.status==='sent'?'Sent':f.status==='sending'?'Sending…':'Received'}</div>
+function renderPeers(){
+  const el = document.getElementById('peersList');
+  if(!peers.length){
+    el.innerHTML = '<div class="empty-state">No devices connected yet. Enter an address above to start.</div>';
+    return;
+  }
+  el.innerHTML = peers.map(p=>`
+    <div class="peer-card ${p.status}">
+      <div class="peer-top">
+        <div class="peer-dot ${p.status}"></div>
+        <div class="peer-addr">${p.addr}</div>
+        <div class="peer-label ${p.status}">
+          ${p.status==='pending'?'Pending…':p.status==='connected'?'Connected':'Incoming'}
+        </div>
+        ${p.status==='connected'?`<button class="peer-remove" onclick="removePeer('${p.id}')" title="Disconnect">✕</button>`:''}
       </div>
+      ${p.status==='incoming'?`
+        <div class="peer-accept-row">
+          <button class="pac-btn acc" onclick="acceptIncoming('${p.id}')">Accept</button>
+          <button class="pac-btn den" onclick="denyIncoming('${p.id}')">Decline</button>
+        </div>
+      `:''}
     </div>
   `).join('');
-  updSelUI();
 }
 
-function toggleSel(id){if(sel.has(id))sel.delete(id);else sel.add(id);updSelUI();renderFiles();}
-
-function updSelUI(){
-  const has=sel.size>0;
-  document.getElementById('tbAct').style.display=has?'none':'flex';
-  document.getElementById('tbSel').style.display=has?'flex':'none';
-  if(has)document.getElementById('selLbl').textContent=sel.size+' selected';
+function renderTransferArea(){
+  const connected = peers.filter(p=>p.status==='connected');
+  const ta = document.getElementById('transferArea');
+  const fs = document.getElementById('filesSection');
+  if(!connected.length){
+    ta.style.display='none';
+    if(!sharedFiles.length) fs.style.display='none';
+    return;
+  }
+  ta.style.display='block';
+  // Update select
+  const sel = document.getElementById('targetSelect');
+  const prev = sel.value;
+  sel.innerHTML = connected.map(p=>`<option value="${p.id}">${p.addr}</option>`).join('');
+  if(prev && connected.find(p=>p.id===prev)) sel.value=prev;
 }
 
-function markAll(){const l=filteredFiles();if(sel.size===l.length)sel.clear();else l.forEach(f=>sel.add(f.id));renderFiles();}
-function rmSel(){files=files.filter(f=>!sel.has(f.id));sel.clear();renderFiles();save();toast('Removed','info');}
-
-function dlSel(){
-  const list=files.filter(f=>sel.has(f.id));let dl=0;
-  list.forEach(f=>{if(f.dataUrl){const a=document.createElement('a');a.href=f.dataUrl;a.download=f.name;document.body.appendChild(a);a.click();document.body.removeChild(a);dl++;}});
-  if(dl)toast(dl+' file'+(dl>1?'s':'')+' downloading','ok');else toast('Saved in history','info');
-  sel.clear();renderFiles();
+function renderFiles(){
+  const el = document.getElementById('filesList');
+  const fs = document.getElementById('filesSection');
+  if(!sharedFiles.length){
+    fs.style.display='none';
+    el.innerHTML='';
+    return;
+  }
+  fs.style.display='block';
+  document.getElementById('filesCount').textContent = sharedFiles.length;
+  el.innerHTML = sharedFiles.slice(0,20).map(f=>`
+    <div class="file-row">
+      <div class="file-icon">
+        ${f.type==='image'&&f.dataUrl?`<img src="${f.dataUrl}" alt="">`:`<span>${femoji(f.type)}</span>`}
+        <div class="file-pbar" style="width:${f.progress||0}%"></div>
+      </div>
+      <div class="file-meta">
+        <div class="file-name" title="${f.name}">${f.name}</div>
+        <div class="file-info">${fsz(f.size)} · ${f.direction==='sent'?'To':'From'} ${f.peerAddr}</div>
+      </div>
+      <div class="file-dir ${f.status==='sending'?'sending':f.direction}">
+        ${f.status==='sending'?f.progress+'%':f.status==='sent'?'Sent':'Received'}
+      </div>
+      ${(f.status==='received'||f.status==='sent')&&f.raw?`
+        <div class="dl-btn" onclick="downloadFile('${f.id}')" title="Download">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+      `:''}
+    </div>
+  `).join('');
 }
 
-function openPv(id){
-  const f=files.find(x=>x.id===id);if(!f)return;pvFile=f;
-  document.getElementById('pvTitle').textContent=f.name;
-  const c=document.getElementById('pvContent');
-  if(f.type==='image'&&f.dataUrl)c.innerHTML=`<img src="${f.dataUrl}" style="max-width:100%;max-height:260px;border-radius:6px">`;
-  else c.innerHTML=`<div style="padding:20px 0;text-align:center"><div style="font-size:48px;margin-bottom:8px">${femoji(f.type)}</div><div style="font-size:13px;font-weight:500;margin-bottom:3px">${f.name}</div><div style="font-size:11px;color:var(--text2)">${fsz(f.size)} · ${f.type.toUpperCase()}</div></div>`;
-  document.getElementById('pvModal').classList.add('open');
-}
-
-function dlPv(){if(pvFile&&pvFile.dataUrl){const a=document.createElement('a');a.href=pvFile.dataUrl;a.download=pvFile.name;document.body.appendChild(a);a.click();document.body.removeChild(a);toast('Downloading…','ok');}else toast('Download from sender','info');closeM();}
-function closeM(){document.getElementById('pvModal').classList.remove('open');pvFile=null;}
-document.getElementById('pvModal').addEventListener('click',e=>{if(e.target===document.getElementById('pvModal'))closeM();});
-window.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
-
-load();
+init();
 </script>
+</body>
+</html>
