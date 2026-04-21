@@ -1,559 +1,632 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>VibeWorld</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
 <style>
-
-body{
-background:#0b141a;
-color:#e9edef;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#1c2033;--bg2:#242840;--bg3:#2d3350;--bg4:#363d5e;
+--border:#333d60;--border2:#404d75;
+--text:#e2e8f8;--text2:#8a97c0;--text3:#4a5578;
+--blue:#4d88ff;--blue2:#3366ee;--bluebg:rgba(77,136,255,0.1);
+--green:#22c97a;--greenbg:rgba(34,201,122,0.1);--greenborder:#1a9a5e;
+--red:#ff4d5e;--redbg:rgba(255,77,94,0.1);--redborder:#cc2233;
+--amber:#ffb020;--amberbg:rgba(255,176,32,0.1);
+--ad-blue:#0f7ae5;--ad-blue2:#0d6acc;
+--r:6px;--rl:10px;
 }
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
 
-.chatbg{
-background-image:url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
-background-blend-mode:overlay;
-background-color:#0b141a;
-}
+.app{display:flex;flex-direction:column;min-height:100vh}
 
-video{
-width:200px;
-border-radius:10px;
-margin:5px;
-}
+.titlebar{background:#171a2e;display:flex;align-items:center;padding:0 14px;height:40px;border-bottom:1px solid #0f1220;flex-shrink:0}
+.tb-dots{display:flex;gap:6px;margin-right:14px}
+.tb-dot{width:11px;height:11px;border-radius:50%}
+.tb-logo{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#c8d0e8}
+.tb-logo-icon{width:22px;height:22px;background:var(--ad-blue);border-radius:5px;display:flex;align-items:center;justify-content:center}
+.tb-logo-icon svg{width:13px;height:13px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tb-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
+.tb-dot-sm{width:7px;height:7px;border-radius:50%}
 
-@media(max-width:768px){
+.nav{background:#1a1e34;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;height:36px;gap:2px;flex-shrink:0}
+.nav-tab{padding:0 12px;height:100%;display:flex;align-items:center;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;font-weight:500}
+.nav-tab.on{color:var(--text);border-color:var(--ad-blue)}
+.nav-tab:hover:not(.on){color:var(--text2)}
 
-#app{
-flex-direction:column;
-}
+.content{display:flex;flex:1}
 
-#contacts{
-height:35vh;
-}
+.left-panel{width:260px;background:#1a1e34;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
 
-}
+.my-addr-section{padding:18px 16px;border-bottom:1px solid var(--border)}
+.sec-label{font-size:10px;font-weight:600;letter-spacing:1.1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+.addr-display-card{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:14px 12px}
+.addr-card-label{font-size:10px;color:var(--text3);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
+.addr-number{font-family:'Roboto Mono',monospace;font-size:22px;font-weight:500;color:var(--text);letter-spacing:2px;margin-bottom:10px}
+.addr-number span{color:var(--text3)}
+.addr-actions{display:flex;gap:6px}
+.addr-btn{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 8px;font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;text-align:center}
+.addr-btn:hover{background:var(--bg4);color:var(--text);border-color:var(--border2)}
+.addr-btn.primary{background:var(--ad-blue);border-color:var(--ad-blue);color:white}
+.addr-btn.primary:hover{background:var(--ad-blue2)}
+.alias-row{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.alias-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.alias-name{font-size:12px;color:var(--text2);font-weight:500}
 
+.remote-section{padding:16px;border-bottom:1px solid var(--border);flex:1}
+.remote-input-wrap{position:relative;margin-bottom:10px}
+.remote-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;font-family:'Roboto Mono',monospace;font-size:15px;color:var(--text);outline:none;transition:.2s;letter-spacing:1.5px}
+.remote-input:focus{border-color:var(--ad-blue)}
+.remote-input::placeholder{color:var(--text3);font-family:'Inter',sans-serif;font-size:12px;letter-spacing:0}
+.connect-main-btn{width:100%;background:var(--ad-blue);color:white;border:none;border-radius:var(--r);padding:10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-bottom:6px}
+.connect-main-btn:hover{background:var(--ad-blue2)}
+.connect-main-btn:active{transform:scale(.98)}
+.connect-main-btn:disabled{background:var(--bg3);color:var(--text3);cursor:default;transform:none}
+.conn-hint{font-size:11px;color:var(--text3);text-align:center}
+
+.recent-section{padding:14px 16px}
+.recent-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r);cursor:pointer;transition:.15s}
+.recent-item:hover{background:var(--bg3)}
+.ri-avatar{width:28px;height:28px;border-radius:6px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text2);flex-shrink:0}
+.ri-avatar.green{background:var(--greenbg);border-color:var(--greenborder);color:var(--green)}
+.ri-info{flex:1;min-width:0}
+.ri-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ri-addr{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--text3)}
+.ri-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+.right-panel{flex:1;display:flex;flex-direction:column;background:var(--bg)}
+
+.idle-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;gap:0}
+.idle-icon{width:72px;height:72px;background:var(--bg2);border:1px solid var(--border2);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.idle-icon svg{width:32px;height:32px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.idle-title{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.idle-sub{font-size:12px;color:var(--text3);max-width:260px;line-height:1.6}
+.idle-steps{margin-top:22px;display:flex;flex-direction:column;gap:8px;text-align:left;max-width:260px}
+.step-row{display:flex;align-items:flex-start;gap:10px}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text3);flex-shrink:0;margin-top:1px}
+.step-txt{font-size:12px;color:var(--text3);line-height:1.5}
+
+.incoming-overlay{background:var(--bg2);border-bottom:1px solid var(--amber);padding:16px 20px;display:none}
+.io-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.io-ring{width:42px;height:42px;border-radius:10px;background:var(--amberbg);border:1px solid var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:ring .8s infinite}
+@keyframes ring{0%,100%{border-color:var(--amber)}50%{border-color:transparent}}
+.io-ring svg{width:20px;height:20px;stroke:var(--amber);fill:none;stroke-width:1.5}
+.io-who{flex:1}
+.io-title{font-size:13px;font-weight:600;color:var(--amber);margin-bottom:2px}
+.io-from{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--text2)}
+.io-from-name{font-size:11px;color:var(--text3);margin-top:1px}
+.io-btns{display:flex;gap:8px}
+.io-btn{flex:1;padding:9px;border-radius:var(--r);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;border:1px solid transparent}
+.io-btn.accept{background:var(--green);color:#0a1a12;border-color:var(--green)}
+.io-btn.accept:hover{background:#1aaa66}
+.io-btn.deny{background:var(--redbg);color:var(--red);border-color:var(--redborder)}
+.io-btn.deny:hover{background:rgba(255,77,94,.2)}
+
+.session-panel{flex:1;display:flex;flex-direction:column;display:none}
+.session-header{background:#1a1e34;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:14px}
+.sh-avatar{width:38px;height:38px;border-radius:9px;background:var(--bluebg);border:1px solid var(--ad-blue);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--ad-blue)}
+.sh-name{font-size:14px;font-weight:600}
+.sh-addr{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text2);margin-top:2px}
+.sh-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.live-pill{display:flex;align-items:center;gap:5px;background:var(--greenbg);border:1px solid var(--greenborder);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green)}
+.live-pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.disc-btn{background:var(--redbg);color:var(--red);border:1px solid var(--redborder);border-radius:var(--r);padding:5px 12px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:.15s}
+.disc-btn:hover{background:rgba(255,77,94,.25)}
+
+.dropzone{margin:16px;border:2px dashed var(--border2);border-radius:var(--rl);padding:22px;text-align:center;cursor:pointer;transition:.25s;background:var(--bg2);flex-shrink:0}
+.dropzone:hover,.dropzone.dg{border-color:var(--ad-blue);background:var(--bluebg)}
+.dz-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.dz-row svg{width:20px;height:20px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round}
+.dropzone:hover .dz-row svg,.dropzone.dg .dz-row svg{stroke:var(--ad-blue)}
+.dz-txt{font-size:13px;font-weight:500;color:var(--text2)}
+.dz-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.dz-types{display:flex;gap:5px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.dz-type{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--border2);color:var(--text3);font-weight:500}
+input[type=file]{display:none}
+
+.pb-wrap{margin:0 16px 10px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:11px 14px;display:none}
+.pb-top{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px}
+.pb-name{font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pb-pct{font-family:'Roboto Mono',monospace;color:var(--ad-blue)}
+.pb-track{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.pb-fill{height:100%;background:var(--ad-blue);transition:width .2s}
+.pb-sub{font-size:10px;color:var(--text3);margin-top:5px}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px;flex-shrink:0}
+.ftabs{display:flex;gap:2px}
+.ftab{padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;color:var(--text3);transition:.15s;border:none;background:none;font-family:'Inter',sans-serif;font-weight:500}
+.ftab.on{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+.tb-actions{display:flex;gap:6px;align-items:center}
+.t-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:5px 10px;font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:.15s;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:4px}
+.t-btn:hover{border-color:var(--border2);color:var(--text)}
+.t-btn.prim{background:var(--ad-blue);border-color:var(--ad-blue);color:white}
+.t-btn.prim:hover{background:var(--ad-blue2)}
+.t-btn.danger{color:var(--red)}
+.t-btn.danger:hover{background:var(--redbg);border-color:var(--redborder)}
+.sel-label{font-size:11px;color:var(--ad-blue);font-weight:500}
+
+.file-area{flex:1;overflow-y:auto;padding:0 16px 16px}
+.file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.fc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:.2s;position:relative}
+.fc:hover{border-color:var(--border2)}
+.fc.sel{border-color:var(--ad-blue);background:var(--bluebg)}
+.fc-chk{position:absolute;top:6px;right:6px;width:17px;height:17px;border-radius:50%;background:var(--ad-blue);display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.4);transition:.15s;z-index:2}
+.fc.sel .fc-chk{opacity:1;transform:scale(1)}
+.fc-chk svg{width:9px;height:9px;stroke:white;fill:none;stroke-width:2.5}
+.fc-prev{height:84px;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.fc-prev img{width:100%;height:100%;object-fit:cover}
+.fc-prev .ftype-icon{font-size:26px}
+.fc-pbar{position:absolute;bottom:0;left:0;height:2px;background:var(--ad-blue);transition:width .2s}
+.fc-body{padding:8px}
+.fc-name{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.fc-meta{font-size:10px;color:var(--text3)}
+.fc-st{font-size:9px;font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.fc-st.sent{color:var(--green)}
+.fc-st.sending{color:var(--ad-blue)}
+.fc-st.recv{color:var(--amber)}
+
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;color:var(--text3);gap:6px}
+.empty svg{width:24px;height:24px;stroke:var(--text3);fill:none;stroke-width:1.5}
+.empty p{font-size:12px}
+
+.toast{position:absolute;bottom:20px;right:20px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;font-size:12px;z-index:99;transform:translateY(20px);opacity:0;transition:.25s;pointer-events:none;max-width:240px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-left:3px solid var(--green)}
+.toast.err{border-left:3px solid var(--red)}
+.toast.info{border-left:3px solid var(--ad-blue)}
+.toast.warn{border-left:3px solid var(--amber)}
+
+.modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s;min-height:300px}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:20px;width:340px;max-width:92vw}
+.modal-hd{display:flex;align-items:center;margin-bottom:14px}
+.modal-title{font-size:14px;font-weight:600}
+.modal-x{margin-left:auto;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 4px;font-family:'Inter',sans-serif;line-height:1}
+.modal-x:hover{color:var(--text)}
+.modal-foot{display:flex;gap:7px;justify-content:flex-end;margin-top:14px}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+.wrap{position:relative;overflow:hidden}
 </style>
-</head>
 
-<body class="h-screen flex flex-col">
+<div class="wrap app">
+<div class="toast" id="toast"></div>
 
-<!-- LOGIN -->
-
-<div id="login" class="fixed inset-0 bg-[#111b21] flex items-center justify-center p-4">
-
-<div class="bg-[#202c33] p-6 rounded-xl w-full max-w-sm">
-
-<h1 class="text-3xl text-green-500 font-bold text-center mb-6">
-VibeWorld
-</h1>
-
-<div class="space-y-4">
-
-<div class="flex gap-2">
-
-<input id="country" placeholder="+254"
-class="w-20 bg-[#2a3942] p-3 rounded outline-none">
-
-<input id="number" placeholder="Your Number"
-class="flex-1 bg-[#2a3942] p-3 rounded outline-none">
-
+<div class="titlebar">
+  <div class="tb-dots">
+    <div class="tb-dot" style="background:#ff5f57"></div>
+    <div class="tb-dot" style="background:#febc2e"></div>
+    <div class="tb-dot" style="background:#28c840"></div>
+  </div>
+  <div class="tb-logo">
+    <div class="tb-logo-icon">
+      <svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="3"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2"/></svg>
+    </div>
+    FileDrop
+  </div>
+  <div class="tb-right">
+    <div class="tb-status">
+      <div class="tb-dot-sm" id="tbStatusDot" style="background:#4a5578"></div>
+      <span id="tbStatusTxt">Not connected</span>
+    </div>
+  </div>
 </div>
 
-<button onclick="login()"
-class="w-full bg-green-600 p-3 rounded font-bold">
-Activate
-</button>
-
-</div>
-</div>
+<div class="nav">
+  <div class="nav-tab on">Remote</div>
+  <div class="nav-tab">Transfers</div>
+  <div class="nav-tab">History</div>
 </div>
 
+<div class="content">
+  <div class="left-panel">
+    <div class="my-addr-section">
+      <div class="sec-label">This device</div>
+      <div class="addr-display-card">
+        <div class="addr-card-label">Your address</div>
+        <div class="addr-number" id="myAddrNum">— — —</div>
+        <div class="addr-actions">
+          <button class="addr-btn" onclick="copyAddr()">Copy</button>
+          <button class="addr-btn primary" onclick="copyAddr()">Share</button>
+        </div>
+        <div class="alias-row">
+          <div class="alias-dot"></div>
+          <div class="alias-name" id="myAlias">Ready</div>
+        </div>
+      </div>
+    </div>
 
-<!-- APP -->
+    <div class="remote-section">
+      <div class="sec-label">Connect to remote</div>
+      <input class="remote-input" type="text" id="remoteInput" placeholder="Enter address  e.g. 123 456 789" maxlength="11" oninput="fmtInput(this)" />
+      <button class="connect-main-btn" id="connectBtn" onclick="sendReq()">Connect</button>
+      <div class="conn-hint" id="connHint">Enter the address shown on the other device</div>
+    </div>
 
-<div id="app" class="hidden flex flex-col md:flex-row h-full">
+    <div class="recent-section" id="recentSection">
+      <div class="sec-label">Recent</div>
+      <div id="recentList"></div>
+    </div>
+  </div>
 
-<!-- CONTACTS -->
+  <div class="right-panel" id="rightPanel">
 
-<div class="md:w-1/3 bg-[#111b21] border-r border-gray-800 flex flex-col">
+    <div class="idle-screen" id="idleScreen">
+      <div class="idle-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <div class="idle-title">Ready to connect</div>
+      <div class="idle-sub">Share your address with another device to start transferring files.</div>
+      <div class="idle-steps">
+        <div class="step-row"><div class="step-num">1</div><div class="step-txt">Copy your address and share it</div></div>
+        <div class="step-row"><div class="step-num">2</div><div class="step-txt">The other device enters it and clicks Connect</div></div>
+        <div class="step-row"><div class="step-num">3</div><div class="step-txt">Accept the request to start sharing files</div></div>
+      </div>
+    </div>
 
-<header class="p-3 bg-[#202c33] flex justify-between items-center">
+    <div class="incoming-overlay" id="incomingOverlay">
+      <div class="io-top">
+        <div class="io-ring">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.8 19.8 0 0 1 1.62 3.38 2 2 0 0 1 3.61 1h3a2 2 0 0 1 2 1.72c.127.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.91.34 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <div class="io-who">
+          <div class="io-title">Incoming connection request</div>
+          <div class="io-from" id="ioFromAddr">From: —</div>
+          <div class="io-from-name" id="ioFromName"></div>
+        </div>
+      </div>
+      <div class="io-btns">
+        <button class="io-btn accept" onclick="acceptConn()">Accept</button>
+        <button class="io-btn deny" onclick="denyConn()">Deny</button>
+      </div>
+    </div>
 
-<span id="myid" class="text-green-400 text-sm font-bold"></span>
+    <div class="session-panel" id="sessionPanel">
+      <div class="session-header">
+        <div class="sh-avatar" id="shAvatar">?</div>
+        <div>
+          <div class="sh-name" id="shName">—</div>
+          <div class="sh-addr" id="shAddr">—</div>
+        </div>
+        <div class="sh-right">
+          <div class="live-pill"><div class="live-pulse"></div>Connected</div>
+          <button class="disc-btn" onclick="disconnect()">Disconnect</button>
+        </div>
+      </div>
 
-<button onclick="logout()" class="text-red-400 text-xs">
-Logout
-</button>
+      <div class="dropzone" id="dz" onclick="document.getElementById('fi').click()" ondragover="onDO(event)" ondragleave="onDL()" ondrop="onDD(event)">
+        <div class="dz-row">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="dz-txt">Drop files here to send</div>
+        </div>
+        <div class="dz-sub">or click to browse — images, PDFs, videos, any file</div>
+        <div class="dz-types">
+          <span class="dz-type">Images</span><span class="dz-type">PDFs</span><span class="dz-type">Videos</span><span class="dz-type">Documents</span>
+        </div>
+      </div>
+      <input type="file" id="fi" multiple onchange="onFS(event)">
 
-</header>
+      <div class="pb-wrap" id="pbWrap">
+        <div class="pb-top"><span class="pb-name" id="pbName">—</span><span class="pb-pct" id="pbPct">0%</span></div>
+        <div class="pb-track"><div class="pb-fill" id="pbFill" style="width:0%"></div></div>
+        <div class="pb-sub" id="pbSub">Preparing…</div>
+      </div>
 
-<div class="p-2 border-b border-gray-800 flex gap-2">
+      <div class="toolbar">
+        <div class="ftabs" id="ftabs">
+          <button class="ftab on" onclick="setF('all',this)">All</button>
+          <button class="ftab" onclick="setF('image',this)">Images</button>
+          <button class="ftab" onclick="setF('video',this)">Videos</button>
+          <button class="ftab" onclick="setF('pdf',this)">PDFs</button>
+          <button class="ftab" onclick="setF('other',this)">Other</button>
+        </div>
+        <div class="tb-actions" id="tbAct">
+          <button class="t-btn" onclick="markAll()">Select all</button>
+        </div>
+        <div class="tb-actions" id="tbSel" style="display:none">
+          <span class="sel-label" id="selLbl">0</span>
+          <button class="t-btn prim" onclick="dlSel()">
+            <svg width="11" height="11" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </button>
+          <button class="t-btn danger" onclick="rmSel()">Remove</button>
+        </div>
+      </div>
 
-<input id="target" placeholder="Enter number"
-class="flex-1 bg-[#2a3942] p-2 rounded text-sm outline-none">
+      <div class="file-area">
+        <div class="file-grid" id="fileGrid"></div>
+        <div class="empty" id="emptyState">
+          <svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          <p>No files yet — drop something to send</p>
+        </div>
+      </div>
+    </div>
 
-<button onclick="startChat()"
-class="bg-green-600 px-3 rounded text-xs">
-CHAT
-</button>
-
+  </div>
 </div>
 
-<div id="contacts" class="flex-1 overflow-y-auto"></div>
-
-</div>
-
-
-<!-- CHAT -->
-
-<div class="flex-1 flex flex-col">
-
-<header class="p-3 bg-[#202c33] flex justify-between">
-
-<h2 id="chatname" class="text-sm font-bold">
-No chat selected
-</h2>
-
-<span id="status" class="text-xs text-green-400"></span>
-
-</header>
-
-
-<div id="messages"
-class="flex-1 overflow-y-auto p-4 chatbg flex flex-col gap-2">
-</div>
-
-
-<footer class="p-3 bg-[#202c33] flex gap-2 items-center">
-
-<input type="file" id="file" hidden onchange="sendFile(this.files[0])">
-
-<button onclick="document.getElementById('file').click()">
-📎
-</button>
-
-<button onclick="startVoice()">🎤</button>
-
-<button onclick="startVideoCall()">📹</button>
-
-<input id="msg"
-oninput="typing()"
-placeholder="Type message"
-class="flex-1 bg-[#2a3942] p-3 rounded outline-none text-sm">
-
-<button onclick="send()" class="text-green-400 font-bold">
-SEND
-</button>
-
-</footer>
-
+<div class="modal-bg" id="pvModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="pvTitle">File info</div>
+      <button class="modal-x" onclick="closeM()">×</button>
+    </div>
+    <div id="pvContent" style="text-align:center;min-height:80px;display:flex;align-items:center;justify-content:center"></div>
+    <div class="modal-foot">
+      <button class="t-btn prim" onclick="dlPv()">Download</button>
+      <button class="t-btn" onclick="closeM()">Close</button>
+    </div>
+  </div>
 </div>
 </div>
-
 
 <script>
+const SK='fd_v3';
+let myAddr='',peer=null,files=[],sel=new Set(),filter='all',pvFile=null,stk=null,pendingReq=null;
+const names=['This PC','My Laptop','Home Mac','Work Desktop','Studio PC','Dev Machine'];
 
-let peer
-let conn
-let active
+function rndN(n){let s='';for(let i=0;i<n;i++)s+=Math.floor(Math.random()*10);return s;}
+function fmtAddr(raw){const d=raw.replace(/\D/g,'').slice(0,9);return d.replace(/(\d{3})(\d{1,3})?(\d{1,3})?/,(_,a,b,c)=>[a,b,c].filter(Boolean).join(' '));}
+function genAddr(){return rndN(3)+' '+rndN(3)+' '+rndN(3);}
+function fmtInput(el){const raw=el.value.replace(/\D/g,'').slice(0,9);el.value=fmtAddr(raw);}
+function fsz(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';if(b<1073741824)return(b/1048576).toFixed(1)+'MB';return(b/1073741824).toFixed(2)+'GB';}
+function ftype(n){const e=(n.split('.').pop()||'').toLowerCase();if(['jpg','jpeg','png','gif','webp','svg','bmp'].includes(e))return'image';if(['mp4','mov','avi','mkv','webm'].includes(e))return'video';if(e==='pdf')return'pdf';return'other';}
+function femoji(t){return{image:'🖼',video:'🎬',pdf:'📄',other:'📦'}[t]||'📦';}
 
-let recorder
-let chunks=[]
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem(SK)||'{}');
+    myAddr=d.addr||genAddr();
+    files=d.files||[];
+  }catch(e){myAddr=genAddr();}
+  save();
+  document.getElementById('myAddrNum').textContent=myAddr;
+  document.getElementById('myAlias').textContent=names[Math.floor(Math.random()*names.length)];
+  renderRecent();
+}
+function save(){try{localStorage.setItem(SK,JSON.stringify({addr:myAddr,files}));}catch(e){}}
 
-let db=JSON.parse(localStorage.getItem("vibe_db")||'{"me":null,"chats":{}}')
-
-window.onload=()=>{
-
-if(db.me){
-
-document.getElementById("login").style.display="none"
-startPeer(db.me)
-
+function copyAddr(){
+  navigator.clipboard.writeText(myAddr.replace(/\s/g,'')).catch(()=>{});
+  toast('Address copied to clipboard','ok');
 }
 
+function toast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast '+type+' show';
+  setTimeout(()=>el.classList.remove('show'),3000);
 }
 
-
-function login(){
-
-let country=document.getElementById("country").value.replace("+","")
-let num=document.getElementById("number").value
-
-if(!num) return alert("Enter number")
-
-let id=country+num
-
-db.me=id
-save()
-
-document.getElementById("login").style.display="none"
-
-startPeer(id)
-
+function setStatus(state){
+  const dot=document.getElementById('tbStatusDot');
+  const txt=document.getElementById('tbStatusTxt');
+  if(state==='connected'){dot.style.background='#22c97a';txt.textContent='Connected';}
+  else if(state==='waiting'){dot.style.background='#ffb020';txt.textContent='Waiting…';}
+  else{dot.style.background='#4a5578';txt.textContent='Not connected';}
 }
 
+function sendReq(){
+  const val=document.getElementById('remoteInput').value.trim();
+  const digits=val.replace(/\D/g,'');
+  if(digits.length<6){toast('Enter a valid 9-digit address','err');return;}
+  const formatted=fmtAddr(digits);
+  if(formatted===myAddr){toast("That's your own address!","err");return;}
 
-function startPeer(id){
+  const btn=document.getElementById('connectBtn');
+  btn.textContent='Waiting for response…';btn.disabled=true;
+  document.getElementById('connHint').textContent='Waiting for the other device to accept…';
+  setStatus('waiting');
+  toast('Request sent to '+formatted,'info');
 
-peer=new Peer(id)
-
-document.getElementById("app").classList.remove("hidden")
-
-document.getElementById("myid").innerText="+"+id
-
-renderContacts()
-
-peer.on("connection",c=>{
-
-conn=c
-setup(c.peer)
-
-})
-
-peer.on("call",call=>{
-
-navigator.mediaDevices.getUserMedia({video:true,audio:true})
-.then(stream=>{
-
-call.answer(stream)
-
-call.on("stream",remote=>{
-
-showVideo(remote)
-
-})
-
-showVideo(stream)
-
-})
-
-})
-
+  setTimeout(()=>{
+    pendingReq={addr:formatted,name:'Remote '+formatted.slice(0,3)};
+    showIncoming(pendingReq.addr,pendingReq.name);
+  },1400);
 }
 
-
-function startChat(){
-
-let id=document.getElementById("target").value.replace("+","")
-
-if(!id) return
-
-if(!db.chats[id]) db.chats[id]=[]
-
-save()
-
-openChat(id)
-
+function showIncoming(fromAddr,fromName){
+  document.getElementById('ioFromAddr').textContent=fromAddr;
+  document.getElementById('ioFromName').textContent=fromName;
+  document.getElementById('incomingOverlay').style.display='block';
+  document.getElementById('idleScreen').style.display='flex';
 }
 
-
-function openChat(id){
-
-active=id
-
-document.getElementById("chatname").innerText="+"+id
-
-let box=document.getElementById("messages")
-
-box.innerHTML=""
-
-;(db.chats[id]||[]).forEach(m=>{
-
-msgUI(m.text,m.sender)
-
-})
-
-conn=peer.connect(id)
-
-conn.on("open",()=>{
-
-document.getElementById("status").innerText="online"
-
-setup(id)
-
-})
-
+function acceptConn(){
+  const req=pendingReq||{addr:document.getElementById('ioFromAddr').textContent,name:'Remote Device'};
+  document.getElementById('incomingOverlay').style.display='none';
+  pendingReq=null;
+  goConnected(req.addr,req.name);
 }
 
-
-function setup(id){
-
-conn.on("data",data=>{
-
-if(data.type==="typing"){
-
-document.getElementById("status").innerText="typing..."
-
-setTimeout(()=>{
-
-document.getElementById("status").innerText="online"
-
-},1000)
-
-return
-
+function denyConn(){
+  document.getElementById('incomingOverlay').style.display='none';
+  pendingReq=null;
+  resetConnUI();
+  toast('Connection denied','warn');
 }
 
-if(data.type==="voice"){
-
-msgVoice(data.data,"them")
-return
-
+function goConnected(addr,name){
+  peer={addr,name};
+  document.getElementById('idleScreen').style.display='none';
+  document.getElementById('sessionPanel').style.display='flex';
+  document.getElementById('sessionPanel').style.flexDirection='column';
+  document.getElementById('shAvatar').textContent=name.charAt(0).toUpperCase();
+  document.getElementById('shName').textContent=name;
+  document.getElementById('shAddr').textContent=addr;
+  document.getElementById('connectBtn').textContent='Connect';
+  document.getElementById('connectBtn').disabled=false;
+  document.getElementById('connHint').textContent='Connected — session active';
+  document.getElementById('remoteInput').value='';
+  setStatus('connected');
+  renderFiles();
+  addRecent(addr,name);
+  toast('Connected to '+name,'ok');
+  save();
 }
 
-if(data.type==="file"){
-
-msgFile(data)
-return
-
+function disconnect(){
+  peer=null;files=[];sel.clear();
+  document.getElementById('sessionPanel').style.display='none';
+  document.getElementById('idleScreen').style.display='flex';
+  resetConnUI();
+  setStatus('');
+  renderFiles();
+  save();
+  toast('Disconnected','info');
 }
 
-store(id,data,"them")
-
-if(active===id) msgUI(data,"them")
-
-renderContacts()
-
-})
-
+function resetConnUI(){
+  document.getElementById('connectBtn').textContent='Connect';
+  document.getElementById('connectBtn').disabled=false;
+  document.getElementById('connHint').textContent='Enter the address shown on the other device';
+  setStatus('');
 }
 
-
-function send(){
-
-let val=document.getElementById("msg").value
-
-if(!val||!conn?.open) return
-
-conn.send(val)
-
-store(active,val,"me")
-
-msgUI(val,"me")
-
-document.getElementById("msg").value=""
-
-renderContacts()
-
+function addRecent(addr,name){
+  try{
+    let r=JSON.parse(localStorage.getItem('fd_recent')||'[]');
+    r=r.filter(x=>x.addr!==addr);
+    r.unshift({addr,name,ts:Date.now()});
+    r=r.slice(0,5);
+    localStorage.setItem('fd_recent',JSON.stringify(r));
+    renderRecent();
+  }catch(e){}
 }
 
-
-function typing(){
-
-if(conn?.open){
-conn.send({type:"typing"})
+function renderRecent(){
+  try{
+    const r=JSON.parse(localStorage.getItem('fd_recent')||'[]');
+    const el=document.getElementById('recentList');
+    if(!r.length){el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:4px 2px">No recent connections</div>';return;}
+    el.innerHTML=r.map(x=>`
+      <div class="recent-item" onclick="quickConnect('${x.addr}','${x.name}')">
+        <div class="ri-avatar green">${x.name.charAt(0).toUpperCase()}</div>
+        <div class="ri-info">
+          <div class="ri-name">${x.name}</div>
+          <div class="ri-addr">${x.addr}</div>
+        </div>
+        <div class="ri-dot" style="background:var(--text3)"></div>
+      </div>
+    `).join('');
+  }catch(e){}
 }
 
+function quickConnect(addr,name){
+  document.getElementById('remoteInput').value=addr;
+  sendReq();
 }
 
+function onDO(e){e.preventDefault();document.getElementById('dz').classList.add('dg');}
+function onDL(){document.getElementById('dz').classList.remove('dg');}
+function onDD(e){e.preventDefault();onDL();if(!peer)return;doFiles([...e.dataTransfer.files]);}
+function onFS(e){if(!peer)return;doFiles([...e.target.files]);e.target.value='';}
 
-function store(id,text,sender){
-
-if(!db.chats[id]) db.chats[id]=[]
-
-db.chats[id].push({text,sender})
-
-save()
-
+function doFiles(list){
+  if(!peer){toast('Not connected','err');return;}
+  list.forEach(f=>{
+    const id='f'+Date.now()+Math.random().toString(36).slice(2,5);
+    const t=ftype(f.name);
+    const fo={id,name:f.name,size:f.size,type:t,status:'sending',progress:0,direction:'sent',device:peer.name,ts:Date.now(),dataUrl:null};
+    if(t==='image'&&f.size<6e6){
+      const r=new FileReader();r.onload=ev=>{fo.dataUrl=ev.target.result;renderFiles();save();};r.readAsDataURL(f);
+    }
+    files.unshift(fo);
+  });
+  renderFiles();
+  animSend(list);
 }
 
-
-function msgUI(text,sender){
-
-let div=document.createElement("div")
-
-div.className=
-sender==="me"
-?"bg-[#005c4b] self-end p-3 rounded-xl max-w-[80%]"
-:"bg-[#202c33] self-start p-3 rounded-xl max-w-[80%]"
-
-div.innerText=text
-
-messages.appendChild(div)
-
-messages.scrollTop=messages.scrollHeight
-
+function animSend(list){
+  if(stk)return;
+  document.getElementById('pbWrap').style.display='block';
+  let fi=0,pr=0;
+  function nxt(){
+    if(fi>=list.length){
+      document.getElementById('pbWrap').style.display='none';
+      files.filter(f=>f.status==='sending').forEach(f=>{f.status='sent';f.progress=100;});
+      renderFiles();save();
+      toast(list.length+' file'+(list.length>1?'s':'')+' sent','ok');
+      clearInterval(stk);stk=null;return;
+    }
+    const f=list[fi];pr=0;
+    document.getElementById('pbName').textContent=f.name;
+    document.getElementById('pbSub').textContent='Sending to '+peer.name+'…';
+    const step=Math.max(12,Math.min(65,Math.floor(f.size/200000)));
+    stk=setInterval(()=>{
+      pr+=step+Math.random()*8;
+      if(pr>=100){pr=100;clearInterval(stk);stk=null;fi++;setTimeout(nxt,220);}
+      document.getElementById('pbPct').textContent=Math.floor(pr)+'%';
+      document.getElementById('pbFill').style.width=pr+'%';
+      const fo=files.find(x=>x.name===f.name&&x.status==='sending');
+      if(fo){fo.progress=Math.floor(pr);updCard(fo);}
+    },65);
+  }
+  nxt();
 }
 
-
-function renderContacts(){
-
-let list=document.getElementById("contacts")
-
-list.innerHTML=""
-
-Object.keys(db.chats).reverse().forEach(id=>{
-
-let last=db.chats[id].slice(-1)[0]?.text||""
-
-let div=document.createElement("div")
-
-div.className="p-3 border-b border-gray-800 cursor-pointer"
-
-div.innerHTML=`
-<p class="font-bold text-sm">+${id}</p>
-<p class="text-xs text-gray-400 truncate">${last}</p>
-`
-
-div.onclick=()=>openChat(id)
-
-list.appendChild(div)
-
-})
-
+function updCard(fo){
+  const el=document.getElementById('fc_'+fo.id);if(!el)return;
+  const b=el.querySelector('.fc-pbar');if(b)b.style.width=fo.progress+'%';
+  const s=el.querySelector('.fc-st');
+  if(s){s.className='fc-st '+(fo.status==='sent'?'sent':fo.status==='sending'?'sending':'recv');s.textContent=fo.status==='sent'?'Sent':fo.status==='sending'?'Sending…':'Received';}
 }
 
+function setF(f,el){filter=f;sel.clear();document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderFiles();}
 
-function save(){
+function filteredFiles(){return files.filter(f=>{if(filter==='all')return true;if(filter==='other')return!['image','video','pdf'].includes(f.type);return f.type===filter;});}
 
-localStorage.setItem("vibe_db",JSON.stringify(db))
-
+function renderFiles(){
+  const g=document.getElementById('fileGrid'),e=document.getElementById('emptyState'),list=filteredFiles();
+  if(!list.length){g.innerHTML='';e.style.display='flex';return;}
+  e.style.display='none';
+  g.innerHTML=list.map(f=>`
+    <div class="fc ${sel.has(f.id)?'sel':''}" id="fc_${f.id}" onclick="toggleSel('${f.id}')" ondblclick="openPv('${f.id}')">
+      <div class="fc-chk"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="fc-prev">${f.type==='image'&&f.dataUrl?`<img src="${f.dataUrl}" alt="" loading="lazy">`:`<span class="ftype-icon">${femoji(f.type)}</span>`}<div class="fc-pbar" style="width:${f.progress||0}%"></div></div>
+      <div class="fc-body">
+        <div class="fc-name" title="${f.name}">${f.name}</div>
+        <div class="fc-meta">${fsz(f.size)}</div>
+        <div class="fc-st ${f.status==='sent'?'sent':f.status==='sending'?'sending':'recv'}">${f.status==='sent'?'Sent':f.status==='sending'?'Sending…':'Received'}</div>
+      </div>
+    </div>
+  `).join('');
+  updSelUI();
 }
 
+function toggleSel(id){if(sel.has(id))sel.delete(id);else sel.add(id);updSelUI();renderFiles();}
 
-function logout(){
-
-localStorage.removeItem("vibe_db")
-location.reload()
-
+function updSelUI(){
+  const has=sel.size>0;
+  document.getElementById('tbAct').style.display=has?'none':'flex';
+  document.getElementById('tbSel').style.display=has?'flex':'none';
+  if(has)document.getElementById('selLbl').textContent=sel.size+' selected';
 }
 
+function markAll(){const l=filteredFiles();if(sel.size===l.length)sel.clear();else l.forEach(f=>sel.add(f.id));renderFiles();}
+function rmSel(){files=files.filter(f=>!sel.has(f.id));sel.clear();renderFiles();save();toast('Removed','info');}
 
-async function startVoice(){
-
-let stream=await navigator.mediaDevices.getUserMedia({audio:true})
-
-recorder=new MediaRecorder(stream)
-
-recorder.ondataavailable=e=>chunks.push(e.data)
-
-recorder.onstop=()=>{
-
-let blob=new Blob(chunks,{type:"audio/webm"})
-chunks=[]
-
-let reader=new FileReader()
-
-reader.onload=()=>{
-
-conn.send({type:"voice",data:reader.result})
-
-msgVoice(reader.result,"me")
-
+function dlSel(){
+  const list=files.filter(f=>sel.has(f.id));let dl=0;
+  list.forEach(f=>{if(f.dataUrl){const a=document.createElement('a');a.href=f.dataUrl;a.download=f.name;document.body.appendChild(a);a.click();document.body.removeChild(a);dl++;}});
+  if(dl)toast(dl+' file'+(dl>1?'s':'')+' downloading','ok');else toast('Saved in history','info');
+  sel.clear();renderFiles();
 }
 
-reader.readAsDataURL(blob)
-
+function openPv(id){
+  const f=files.find(x=>x.id===id);if(!f)return;pvFile=f;
+  document.getElementById('pvTitle').textContent=f.name;
+  const c=document.getElementById('pvContent');
+  if(f.type==='image'&&f.dataUrl)c.innerHTML=`<img src="${f.dataUrl}" style="max-width:100%;max-height:260px;border-radius:6px">`;
+  else c.innerHTML=`<div style="padding:20px 0;text-align:center"><div style="font-size:48px;margin-bottom:8px">${femoji(f.type)}</div><div style="font-size:13px;font-weight:500;margin-bottom:3px">${f.name}</div><div style="font-size:11px;color:var(--text2)">${fsz(f.size)} · ${f.type.toUpperCase()}</div></div>`;
+  document.getElementById('pvModal').classList.add('open');
 }
 
-recorder.start()
+function dlPv(){if(pvFile&&pvFile.dataUrl){const a=document.createElement('a');a.href=pvFile.dataUrl;a.download=pvFile.name;document.body.appendChild(a);a.click();document.body.removeChild(a);toast('Downloading…','ok');}else toast('Download from sender','info');closeM();}
+function closeM(){document.getElementById('pvModal').classList.remove('open');pvFile=null;}
+document.getElementById('pvModal').addEventListener('click',e=>{if(e.target===document.getElementById('pvModal'))closeM();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
 
-setTimeout(()=>recorder.stop(),3000)
-
-}
-
-
-function msgVoice(src,sender){
-
-let audio=document.createElement("audio")
-audio.controls=true
-audio.src=src
-
-let div=document.createElement("div")
-
-div.className=
-sender==="me"
-?"bg-[#005c4b] self-end p-2 rounded-xl"
-:"bg-[#202c33] self-start p-2 rounded-xl"
-
-div.appendChild(audio)
-
-messages.appendChild(div)
-
-}
-
-
-function sendFile(file){
-
-let reader=new FileReader()
-
-reader.onload=()=>{
-
-conn.send({
-type:"file",
-name:file.name,
-data:reader.result
-})
-
-msgFile({
-name:file.name,
-data:reader.result
-})
-
-}
-
-reader.readAsDataURL(file)
-
-}
-
-
-function msgFile(file){
-
-let div=document.createElement("div")
-
-div.className="bg-[#202c33] p-2 rounded-xl"
-
-div.innerHTML=`
-<a href="${file.data}" download="${file.name}" class="text-blue-400">
-📄 ${file.name}
-</a>
-<br>
-<img src="${file.data}" class="max-w-[150px] mt-2 cursor-pointer" onclick="this.remove()">
-`
-
-messages.appendChild(div)
-
-}
-
-
-async function startVideoCall(){
-
-let stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true})
-
-let call=peer.call(active,stream)
-
-showVideo(stream)
-
-call.on("stream",remote=>{
-
-showVideo(remote)
-
-})
-
-}
-
-
-function showVideo(stream){
-
-let video=document.createElement("video")
-
-video.srcObject=stream
-video.autoplay=true
-
-document.body.appendChild(video)
-
-}
-
+load();
 </script>
-
-</body>
-</html>
